@@ -1,0 +1,9 @@
+== Тестовые endpoint ==
+{| class="wikitable"
+|-
+!  Тип !! Сервер
+|-
+| HTTP || http://dsouts.experium.ru/SupportSrv/SupportSrv.svc/Support
+|-
+| HTTPS || https://dsouts.experium.ru/SupportSrv/SupportSrv.svc/Support
+|}

@@ -1,0 +1,4602 @@
+[[Файл:ancor_outsourcing_logo.png|200px|inline|right]]
+
+== Заголовки ==
+
+Т.к. в языке описания ESS используются регистрозависимые переменные, часть из которых устанавливаются исходя из входящего регистра названия заголовка, то SomeHeader - это не то же самое, что и someheader. Передавать требуется в указанном документацией регистре.
+
+Также читаем [https://github.com/nodejs/node-v0.x-archive/issues/1954 тут]
+
+== Тестовые endpoint ==
+
+{| class="wikitable"
+|-
+!  Тип !! Сервер 
+|-
+| HTTP || http://dsouts.experium.ru/SupportSrv/SupportSrv.svc/Support
+|-
+| HTTPS || https://dsouts.experium.ru/SupportSrv/SupportSrv.svc/Support
+|}
+
+== Аутентификация ==
+
+Для работы с API необходимо получить ''Token'', который должен присутствовать в заголовке ''Authorization'' при каждом запросе в виде ''Authorization: Token <some-token-here>''.
+=== Общая аутентификации ===
+После пяти попыток требует ввести капчу. см. [[Experium_Outsourcing#Защита от подбора пароля|Защита от подбора пароля]]
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/login/common
+Authorization: Basic ZWxudXI6cGFzc3dvcmQ=
+</syntaxhighlight>
+
+[[Experium_RESTful_Web_Service#Общая аутентификация|Общая аутентификация]]
+
+=== Тип аутентификации ===
+Все запросы к ресурсам Experium Outsourcing должны содержать заголовок:
+<syntaxhighlight lang="html5">
+X-ESS-OS-AUTH-TYPE: authType
+</syntaxhighlight>
+Варианты authType:
+{| class="wikitable"
+|-
+! Тип !! Назначение
+|-
+| OutsourceClient || Вход в систему как сотрудник компании заказчика
+|-
+| OutsourceStaff || Вход в систему работника
+|}
+
+
+<div style="border: 1px solid; margin: 5px 0px; padding:15px 10px 15px 50px; background-repeat: no-repeat; background-position: 10px center; color: #9F6000; background-color: #FEEFB3; ">
+<div style="display: inline; top: 20px; left: 20px;">[[File:warning.png]]</div> Если использовалась [[Experium_RESTful_Web_Service#Общая аутентификация|Общая аутентификация]], то должны использоваться названия из <b>accounts</b>
+</div>
+
+=== Служебные заголовки ESS для Outsourcing ===
+Для работы ESS необходимо сохранять и передавать в последующих запросах заголовки, начинающеейся с X-ESS-OS-.
+
+=== Получение токена ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/authentication
+Authorization: Basic ZWxudXI6cGFzc3dvcmQ=
+</syntaxhighlight>
+
+Ответ:
+
+<tabs>
+<tab name="Client">
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/authentication/0b39e25e7c4007af0b68e2f0adbc07f1
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "token": "0b39e25e7c4007af0b68e2f0adbc07f1",
+  "createdAt": "2013-12-18T09:38:32+04:00",
+  "id": 1,
+  "name": {
+    "firstName": "Иван",
+    "lastName": "Дивненко",
+    "middleName": "Петрович"
+  },
+  "town": "Саратов",
+  "phone": "123-123-12433",
+  "vacationDays": 20,
+  "userType": "ClientStaff",
+  "email": "user@host.ni",
+  "positon": "Старший разработчик",
+  "worksFrom": "20110528",
+  "project": 20,
+  "isClient": true,
+  "isStaff": false,
+  "entityId": 5,
+  "personalDataProcessing": false,
+  "lastwork": {
+    "company": 800,
+    "companyName": "Ancor Outsourcing",
+    "startDate": "201610",
+    "department": 711
+  }
+}
+</syntaxhighlight>
+</tab>
+<tab name="Staff">
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/authentication/0b39e25e7c4007af0b68e2f0adbc07f1
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "token": "0b39e25e7c4007af0b68e2f0adbc07f1",
+  "createdAt": "2013-12-18T09:38:32+04:00",
+  "id": 1,
+  "name": {
+    "firstName": "Иван",
+    "lastName": "Дивненко",
+    "middleName": "Петрович"
+  },
+  "phone": "123-123-12433",
+  "companyName": "The Pathna Ltd",
+  "userType": "ClientStaff",
+  "email": "user@host.ni",
+  "positon": "Старший разработчик",
+  "coordinator": 42,
+  "worksFrom": "20110528",
+  "project": 20,
+  "entityId": 5,
+  "personalDataProcessing": false,
+  "employee": 10,
+  "employed": true,
+  "isClient": false,
+  "isStaff": true,
+  "assignmentKey": 2,
+  "workerKey": 4,
+  "photo": {
+    "type": "jpeg",
+    "body": "base64"
+  },
+  "gpd": true
+}
+</syntaxhighlight>
+</tab>
+</tabs>
+
+=== Защита от подбора пароля ===
+
+* Пользователь вводит неправильный логин и/или пароль – получает ошибку (неверный логин/пароль, '''HTTP 401 Unauthorized''')
+* Пользователь вводит третий раз (настраивается) неверный логин и/или пароль – в теле ответа возвращается картинка CAPTCHA: { "code": "base64 encoded PNG image" }
+* Последующая попытка аутентификации должна содержать в теле запроса код CAPTCHA { "code": "DEADBEEF" }
+* Если пользователь вводит правильный логин и пароль и код, то CAPTCHA удаляется из базы данных, иначе возращается в ответ новая картинка
+
+
+<div style="border: 1px solid; margin: 5px 0px; padding:15px 10px 15px 50px; background-repeat: no-repeat; background-position: 10px center; color: #9F6000; background-color: #FEEFB3; ">
+<div style="display: inline; top: 20px; left: 20px;">[[File:warning.png]]</div> <b>Примечание:</b> блокировка осуществляется по логину и количеству попыток
+</div>
+
+=== Отправка письма для смены пароля ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/password-reset
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "email": "someuser@somedomain.au",
+  "url-with-token": "http://host/password-reset/"
+}
+</syntaxhighlight>
+
+При формировании письма к параметру '''url-with-token''' будет добавлен сгенерированный токен для смены пароль: http://host/password-reset/TOKEN.
+
+== Получение существующей информации по ключу ==
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/registration?authKey=KEY
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "token": "KILAAALOOOKJKHCI",
+  "id": 1,
+  "name": {
+    "firstName": "Иван",
+    "lastName": "Дивненко",
+    "middleName": "Петрович"
+  },
+  "companyName": "The Pathna Ltd",
+  "userType": "ClientStaff",
+  "email": "user@host.ni"
+}
+</syntaxhighlight>
+
+Заголовки в ответе:
+<syntaxhighlight lang="html5">
+X-ESS-OS-NEXT-CMD: nextCommandString
+X-ESS-OS-NEXT-CMD-METHOD: nextCommandMethodString
+</syntaxhighlight>
+
+== Регистрация пользователя ==
+
+После перехода по ссылке с authKey пользователь должен ввести пароль для создаваемой учетной записи.
+
+Заголовки (полученные от GET /v1/os/registration):
+<syntaxhighlight lang="html5">
+X-ESS-OS-NEXT-CMD: nextCommandString
+X-ESS-OS-NEXT-CMD-METHOD: nextCommandMethodString
+</syntaxhighlight>
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/registration
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "authKey": "KILAAALOOOKJKHCI",
+  "email": "nomail@nohost.com",
+  "password": "123"
+}
+</syntaxhighlight>
+
+Ответ:
+
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+
+Location: https://example.com/authentication/0b39e25e7c4007af0b68e2f0adbc07f1
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "token": "0b39e25e7c4007af0b68e2f0adbc07f1",
+  "createdAt": "2013-12-18T09:38:32+04:00",
+  "direction": {
+    "command": "DoClientStaffSupport"
+  }
+}</syntaxhighlight>
+
+Если ключ уже был использован и нужно перенаправить пользователя на страницу входа, то ответ:
+
+<syntaxhighlight lang="html5">
+HTTP/1.1 405 Method Not Allowed
+</syntaxhighlight>
+
+== Получение ключа для сброса пароля ==
+
+'''Для выбора типа пользователя''' [[Experium_Outsourcing#Тип аутентификации|см. Тип аутентификации]]
+<br />
+Ключ приходит внутри письма и используется в запросе как обычный токен для регистрации пользователя. 
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/password-reset
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "email": "noname@nohost.de",
+  "url-with-token": "www.example.com/"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+
+== Пользователи ==
+=== Получение списка всех аккаунтов ===
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/user/accounts
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "token": "TOKEN",
+  "createdAt": "2016-03-07 16:00",
+  "accounts": [
+    {
+      "name": "MinZdravSpecialist"
+    }
+  ]
+}
+</syntaxhighlight>
+=== Получение информации о текущем пользователе ===
+==== По ключу из почты ====
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/user/information?authKey=TOKEN
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "name": {
+    "firstName": "Владимир",
+    "lastName": "*"
+  },
+  "birthDate": "19930809",
+  "email": "levikov@experium.ru",
+  "adress": "Абадан",
+  "phone": "(8964)535-7091"
+}
+</syntaxhighlight>
+==== После регистрации ====
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/user/current
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+Структура JSON'a идентична той что приходит в [[Experium_Outsourcing#Тип аутентификации| аутентификации]]
+
+==== После регистрации в едином входе ====
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/user/current/ext
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+Структура JSON'a идентична той что приходит в [[Experium_Outsourcing#Тип аутентификации| аутентификации]]
+
+=== Одобрение на обработку персональных данных ===
+
+{| class="wikitable"
+|-
+! FROM !! Описание
+|-
+|cabinet || из кабинета
+|-
+|mail || из почты
+|}
+
+Если FROM равно mail, то нужно в get-параметре передать authkey из ссылки полученной в письме.
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/user/personal-data-processing/FROM
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "firstname": "Дмитрий",
+  "middlename": "Захарович",
+  "lastname": "Тополев",
+  "phone": "+7(123)456-89-20",
+  "email": "user@host.ru",
+  "personalDataProcessing": true,
+  "addToMailling": 1,
+  "attachment": "<html>HTML-строка, которая будет кодироваться в base64</html>",
+  "passport": {
+    "seria": "123456",
+    "number": "123456789",
+    "whoIssue": "Название отделения"
+  }
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+
+=== Условия работы ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/user/work/conditions
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "worktime": "полная занятость",
+  "position": "Секретарь",
+  "fromDate": "20160722",
+  "lastname": "Пастухова",
+  "middlename": "Юрьевна",
+  "firstname": "Надежда",
+  "management": "Управление бухгалтерского учета и отчетности",
+  "city": "Киров",
+  "address": "Октябрьский пр. 123",
+  "emails": [
+    {
+      "type": "раб",
+      "email": "tetsmail2show@qwerty.qw"
+    }
+  ],
+  "phones": [
+    {
+      "code": "+7",
+      "type": "конт",
+      "comment": "бла-бла",
+      "number": "4953332211"
+    }
+  ],
+  "duties": [
+    {
+      "text": "Осуществление делопроизводства"
+    },
+    {
+      "id": 87,
+      "offset": 3,
+      "text": "Ведение внутреннего электронного и бумажного документооборота на участке учета доходов"
+    }
+  ],
+  "dutiesGPD": [
+    {
+      "id": 87,
+      "offset": 3,
+      "text": "Ведение внутреннего электронного и бумажного документооборота на участке учета доходов"
+    }
+  ],
+  "compensations": [
+    {
+      "type": "Питание",
+      "provider": "столовая",
+      "composition": "2000"
+    }
+  ],
+  "infrastructure": [
+    {
+      "type": "Автомобиль",
+      "provider": "Провайдер"
+    }
+  ]
+}
+</syntaxhighlight>
+
+== Сотрудник компании заказчика ==
+
+=== Получение списка управлений ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/client/office
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+[
+  {
+    "value": "Административное направление",
+    "id": 19001
+  },
+  {
+    "value": "Юридическое управление",
+    "id": 19068
+  }
+]
+</syntaxhighlight>
+
+=== Получение списка позиций ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/client/position{?office=KEY&search=substr}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+[
+  {
+    "value": "Ассистент бухгалтера",
+    "id": 8
+  },
+  {
+    "value": "Ассистент бухгалтера по учету реализации",
+    "id": 12
+  },
+  {
+    "value": "Ассистент на участке себестоимости",
+    "id": 13
+  }
+]
+</syntaxhighlight>
+
+=== Получение услуг по ключу позиции ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/client/position/POSKEY/service
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+[
+  {
+    "bdo": 4195,
+    "bdoServiceName": "Услуга по созданию игровых и социально-развлекательных онлайн-проектов",
+    "tdo": 4116,
+    "tdoServiceName": "Создание игровых и социально-развлекательных онлайн-проектов"
+  },
+  {
+    "bdo": 4195,
+    "bdoServiceName": "Услуга по созданию игровых и социально-развлекательных онлайн-проектов",
+    "tdo": 4116,
+    "tdoServiceName": "Создание игровых и социально-развлекательных онлайн-проектов",
+    "ddo": 4117,
+    "ddoServiceName": "Анализ цели и задач создания игрового онлайн-проекта"
+  }
+]
+</syntaxhighlight>
+
+== Получение ID шаблона  ==
+'''entityId''' - Номер юридического лица, берётся из [[Experium_Outsourcing#Получение токена]]
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/template?SYS_token=TOKEN&entityId=77&type=3&AuthType=AsClient
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "id": 67
+}
+</syntaxhighlight>
+
+'''Значение type'''
+{| class="wikitable"
+|-
+! TYPE !! DataCnv !! Назначение
+|-
+| vacation || 1 || Заявление на отпуск
+|-
+| dismissal || 2 || Заявление на увольнение
+|-
+| lastname-change || 3|| Заявление на изменение фамилии
+|-
+| prepayment-report || 4 || Авансовый отчет
+|-
+| business-trip-report || 5 || Отчет о командировке
+|-
+| education-vacation || 6 || Заявление на учебный отпуск<ref>http://help.heliosoft.ru/issues/54178</ref>
+|-
+| vacation-without-pay || 7 || Отпуск без сохранения зар.платы
+|-
+| prepayment-report-rules || 8 || Правила заполнения Авансового Отчёта
+|}
+
+== Прикрепление фотографии ==
+'''id''' - берётся из запроса текущего пользователя
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/photo
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "body": "base64",
+  "fileType": "jpeg",
+  "name": "фото_для_теста",
+  "id": 11
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "document": 22
+}
+</syntaxhighlight>
+
+== Заявления ==
+'''project''' - число обозначающее код проекта(поле project, см. [[Experium_Outsourcing#Получение токена|Получение токена]]).
+
+В ЛКС во всех заявках обязателен  employee, но он берется из данных этого сотрудника, соответственно передавать его не надо, но надо передавать workerKey
+
+{| class="wikitable"
+|-
+! тип\поле !! DataCnv !! Назначение !! coordinator !! project !! workerKey !! employee
+|-
+| sick-leave || OutsTask_SICK_LEAVE || Больничный || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| vacation || OutsTask_VACATION || Отпуск || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| business-trip || OutsTask_BUSINESS_TRIP || Командировка || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| absence || OutsTask_NON_APPEARANCE || Отсутствие || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| personal-data-change || OutsTask_CHANGE_OF_PERSONAL_DATA || Изменение персональных Данных || Нет || Нет || Нет || '''Да''' 
+|-
+| inquiries || OutsTask_INQUIRIES || Заказ справки || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| dismissal || OutsTask_DISMISSAL || Увольнение || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| self-dismissal || OutsTask_SELF_DISMISSAL || Увольнение по собственному желанию || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| approved || OutsTask_CONFIRMATION_BY_CLIENT || Подтверждены со стороны клиента(только получение списка) || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| canceled || OutsTask_Cancel_BONUS || Отклонение со стороны клиента(только получение списка) || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| other || OutsTask_OTHER || Прочее || '''Да''' || Нет || Нет || Нет
+|-
+| call-me || OutsTask_CALLME || Заказать обратный звонок || '''Да''' || Нет || Нет || Нет
+|-
+| other-payments || OutsTask_OTHER_PAYMENTS || Прочие платежи || Нет || '''Да''' || Нет || Нет
+|-
+| expand-service || OutsPriemForm || Запрос на увеличение услуг || Нет || '''Да''' || Нет || Нет
+|-
+| absence-confirmation || OutsTask_NON_APPEARANCE_CONFIRMATION || Одобрение на отсутствие || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| absence-confirmation-gpd || OutsTask_GPD_NON_APPEARANCE_CONFIRMATION || Одобрение на отсутствие || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| sick-leave-confirmation || OutsTask_SICK_LEAVE_CONFIRMATION || Одобрение на отпуск по болезни || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| business-trip-confirmation || OutsTask_BUSINESS_TRIP_CONFIRMATION || Одобрение на командировку || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| business-trip-confirmation-gpd || OutsTask_GPD_BUSINESS_TRIP_CONFIRMATION || Одобрение на командировку || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| vacation-confirmation || OutsTask_VACATION_CONFIRMATION || Одобрение на отпуск || Нет || '''Да''' || '''Да''' || '''Да''' 
+|-
+| dismissal-confirmation || OutsTask_DISMISSAL_CONFIRMATION || Одобрение на увольнение || Нет || '''Да''' || '''Да''' || '''Да''' 
+|}Для '''absence ''' есть только поля общие для всех. 
+Типы доставки(delivery/type):
+{| class="wikitable"
+|-
+! TYPE !! Назначение
+|-
+| 1 || Заберу сам (в офисе АНКОРа)
+|-
+| 2 || Отправить
+|}
+
+Назначение ключей в полях:
+{| class="wikitable"
+|-
+! ключ !! Назначение
+|-
+| employee || Сотрудник на которого оформляется заявка. Только для клиента.
+|-
+| coordinator || Координатор(внутренний пользователь программы Experium). Пример запроса - заказ обратного звонка.
+|-
+| workerKey || Всегда в заявках от сотрудника. В заявках от клиента только если она относится к конкретному сотруднику.
+|}
+
+Статус родительской задачи(parent/state):
+{| class="wikitable"
+|-
+! state !! Описание списка !! DataCnv
+|-
+|not-seen || в работе / на согласовании || 1
+|-
+|ready ||согласовано || 5
+|-
+|done ||просмотренно || 7
+|-
+|error ||  Ошибка || 10
+|-
+|client-approve||  одобрено пользователем || 11
+|-
+|client-decline ||  отклонено пользователем || 12
+|}
+
+=== Структура заявки ===
+
+Значения поля recommended <ref>http://help.heliosoft.ru/issues/52356</ref>
+{| class="wikitable"
+|-
+! recommended !! Рекомендовано
+|-
+|byClient || клиентом
+|-
+|byAncor || Ancor
+|}
+
+Помимо полей ниже, для запроса на редактирование для '''expand-service''' могут добавляться "'''additionalInfrastructure'''" и в поле "'''infrastructure'''" данные из поля '''infrastructure''' и '''compensation''' из [[Experium Outsourcing#Дополнительная информация о проекте | дополнительной информации о проекте]]<ref>http://help.heliosoft.ru/issues/53480</ref>.<br />
+Поле '''coordinator''' обязательно для всех типов заявок, где указывается поле '''project'''.
+Поле '''childrenStates''' - это статус дочерних задач в заявке. 
+
+==== business-trip ====
+<syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 23,
+  // Общие для всех
+  "draft": true,
+  "comment": "Сломал ногу",
+  "state:" "inwork",
+  "parentState": "ready",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "type": "business-trip",
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Кузовкина Марина"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "businessTrip": {
+    "destination": "",
+    "goal": "",
+    "payment": {
+      "code": 1,
+      "prepayment": "Да", // Приходит только на ответ
+      "value": 1000.50,
+      "currency": 1,
+      "_embedded": {
+          "currency": {
+              "id": 1,
+              "name": "!RUR" 
+          }
+      }
+    }
+  },
+  "outlay": [
+    {
+      "name": "Проживание",
+      "price": 123.21,
+      "number": 1,
+      "amount": 2222
+    }
+  ],
+  "duties": [
+    {
+      "ddo": "123",
+      "ddoName": "ДО 123",
+      "kpiType": "3",
+      "kpiName": "Primary",
+      "kpiValue": 3,
+      "kpiComment": "Комментарий ДО",
+      "planValue": "нет"
+    }
+}
+</syntaxhighlight>
+
+====dismissal====
+    <syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 23,
+  // Общие для всех
+  "draft": true,
+  "comment": "Сломал ногу",
+  "state:" "inwork",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Кузовкина Марина"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "dismissal": {
+    "service": "наименование услуги",
+    "application": "номер приложения",
+    "reason": "Рождение дочери",
+    "documentKey": 3
+  }
+}
+    </syntaxhighlight>
+  
+====vacation====
+    <syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 23,
+  // Общие для всех
+  "draft": true,
+  "comment": "Сломал ногу",
+  "state:" "inwork",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Кузовкина Марина"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "vacation": {
+    "type": 3,
+    "_embedded": {
+      "type": {
+        "id": 3,
+        "name": "Очередной"
+      }
+    },
+    "documentKey": 3
+  }
+}
+    </syntaxhighlight>
+  
+====personal-data-change====
+    <syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 23,
+  // Общие для всех
+  "draft": true,
+  "comment": "Сломал ногу",
+  "state:" "inwork",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Кузовкина Марина"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "lastname": {
+    "old": "Иванова",
+    "new": "Петрова",
+    "document": 1,
+    "applicationToChange": 33,
+    "_embedded": {
+      "document": {
+        "id": 1,
+        "name": "Скан паспорта с новой фамилией.jpg"
+      }
+    }
+  },
+  "passport": {
+    "name": 9,
+    "issueDate": "20030121",
+    "series": "1803",
+    "whoIssue": "УВД провициального городка",
+    "departmentCode": "817171",
+    "documentKey": {
+      "firstPage": 21,
+      "secondPage": 23
+    }
+  },
+  "officialAddress": {
+    "region": "Забайкальский край",
+    "district": "Серебряный бор",
+    "country": 1,
+    "_embedded": {
+      "id": 1,
+      "name": "Россия"
+    },
+    "fromDate": "20160801",
+    "toDate": "20161202",
+    "index": "11111",
+    "town": "Комсомольск-на-Амуре",
+    "street": "ул. Вязов",
+    "house": "23",
+    "building": "22",
+    "flat": "22"
+  }
+}
+    </syntaxhighlight>
+  
+====inquiries====
+    <syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 23,
+  // Общие для всех
+  "draft": true,
+  "comment": "Сломал ногу",
+  "state:" "inwork",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Кузовкина Марина"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "inquiries": {
+    "type": "Справка о доходах 2-НДФЛ",
+    "period": "I-е полугодие 2016 г.",
+    "copies": 1,
+    "delivery": {
+      "type": 1,
+      "adress": "На деревню к дедушке"
+    }
+  }
+}
+    </syntaxhighlight>
+
+==== other или call-me ====
+    <syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 23,
+  // Общие для всех
+  "draft": true,
+  "comment": "Сломал ногу",
+  "state:" "inwork",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Кузовкина Марина"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "other": {
+    "documentKey": 2,
+    "phone": "+7(123)4567890",
+    "comment": "Перезвоните, нужно всё обсудить"
+  }
+}
+    </syntaxhighlight>
+  
+====other-payments====
+    <syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 23,
+  // Общие для всех
+  "draft": true,
+  "comment": "Сломал ногу",
+  "state:" "inwork",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Кузовкина Марина"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "otherPayments": {
+    "type": 2,
+    "value": 13543,
+    "comment": "Компенсация за материалы",
+    "currency": 3,
+    "period": "022012",
+    "_embedded": {
+      "type": {
+        "id": 1,
+        "name": "Прочие выплаты"
+      },
+      "currency": {
+        "id": 2,
+        "name": "EUR"
+      }
+    }
+  }
+}
+    </syntaxhighlight>
+  
+====sick-leave====
+    <syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 23,
+  // Общие для всех
+  "draft": true,
+  "comment": "Сломал ногу",
+  "state:" "inwork",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Кузовкина Марина"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "sickLeave": {
+    "documentKey": 45
+  }
+}
+</syntaxhighlight>
+
+====non-appearance====
+
+<syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 25,
+  // Общие для всех
+  "draft": true,
+  "comment": "Свалился под поезд",
+  "state:" "inwork",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Волков Саша"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "sickLeave": {
+    "documentKey": 45
+  }
+}
+</syntaxhighlight>
+
+====expand-service====
+{| class="wikitable"
+|-
+! поле !! DataCnv !!Описание
+|-
+| city || CITYKEY || город из проекта<ref>http://help.heliosoft.ru/issues/54168#note-9</ref>
+|-
+| workcity || WORKCITY || город, где человек реально работает
+|-
+| allSubtreeItems || - || Флаг для объектов внутри services, если true, то выбраны все объекты внутри nodes текущего объекта<ref>Нужно для тикета http://help.heliosoft.ru/issues/54239</ref>
+|}
+'''groups''' - данные берутся из [[Experium_Outsourcing#Дополнительная информация о проекте|дополнительной информации о проекте]]
+{| class="wikitable"
+|-
+! поле !! соответствие с groups из [[Experium_Outsourcing#Дополнительная информация о проекте|Дополнительной информация о проекте]]
+|-
+| group || groups/../group
+|-
+| code || groups/../list/../code
+|-
+| name || groups/../name
+|-
+| type || groups/../id
+|}
+
+'''bonus''' - показывается везде, но менять его значение ты можешь только для изменения услуг.
+'''hasBonus''' - для увелечений объема услуг(Да/Нет словарь)
+'''bonusType''' - тип бонуса, для увелечения объёма услуг.
+
+<syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 23,
+  // Общие для всех
+  "draft": true,
+  "comment": "Сломал ногу",
+  "state:" "inwork",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "fullName": "Байкова Ирина Мандариновна",
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Кузовкина Марина"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "service": {
+    "contacts": {
+      "name": "рек ФИО",
+      "email": "рек email",
+      "phone": "рек тел"
+    },
+    "nonStandartDay": 1,
+    "work": {
+      "place": "место работы (адрес)",
+      "time": ""
+    },
+    "dateFrom": "20160715",
+    "clientStake": "",
+    "contractType": 4,
+    "payment": {
+      "other": "Другие типы оплаты (если нет в словаре нужной)",
+      "value": 400,
+      "mode": 9,
+      "_embedded": {
+        "mode": {
+          "code": 9,
+          "name": "Фикс."
+        },
+        "currency": {
+          "code": 10,
+          "name": "Фунты"
+        }
+      },
+      "currency": 10
+    },
+    "additionDaysNumber": 5,
+    "qualification": "треб к квалиф",
+    "recommended": "byClient",
+    "monthTable": {
+      "id": 213,
+      "name": "Bacилeнкo-clientStaff Светлана",
+      "phone": "(7903) 578-1126",
+      "email": "vasilenko@experium.ru"
+    },
+    "monthReport": {
+      "id": 71,
+      "name": "Рогозин Алексей Юрьевич",
+      "email": "dubets@experium.ru"
+    },
+    "city": 0,
+    "workcity": "Москва",
+    "urkService": 7047,
+    "amount": 2,
+    "additional": "Доп. Услуги",
+    "bonusType": 1,
+    "hasBonus": 1,
+    "_embedded": {
+      "city": {
+        "code": 0,
+        "name": "Город"
+      },
+      "contractType": {
+        "code": 4,
+        "value": "Тип контракта"
+      },
+      "nonStandartDay": {
+        "code": 1,
+        "value": "Да"
+      }
+    },
+    "cityOther": "Другой город (если нет в словаре нужного)",
+    "position": {
+      "bdo": 1911,
+      "_embedded": {
+        "id": 1911,
+        "name": "Услуги по административной поддержке продаж"
+      },
+      "id": 16,
+      "name": "Ассистент по налогообложению",
+      "companyClassification": 19054
+      "_embedded": {
+        "code": 19054,
+        "name": ""
+      }
+    },
+    "comment": "Комментарий"
+  },
+  "services": [
+    {
+      "bdo": 89,
+      "bdoServiceName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "tdo": 28,
+      "tdoServiceName": "Осуществление делопроизводства",
+      "ddo": 90,
+      "ddoServiceName": "Ведение внутреннего электронного и бумажного документооборота на участке расчета себестоимости"
+    },
+    {
+      "bdo": 89,
+      "bdoServiceName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "tdo": 28,
+      "tdoServiceName": "Осуществление делопроизводства",
+      "ddo": 30,
+      "ddoServiceName": "Координация визирования и подписания документов Заказчика"
+    }
+  ],
+  "duties": [
+    {
+      "bdo": 89,
+      "bdoName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "bdoServiceName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "tdo": 28,
+      "tdoName": "Осуществление делопроизводства",
+      "tdoServiceName": "Осуществление делопроизводства",
+      "ddo": 90,
+      "ddoName": "Ведение внутреннего электронного и бумажного документооборота на участке расчета себестоимости",
+      "ddoServiceName": "Ведение внутреннего электронного и бумажного документооборота на участке расчета себестоимости"
+    },
+    {
+      "bdo": 89,
+      "bdoName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "bdoServiceName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "tdo": 28,
+      "tdoName": "Осуществление делопроизводства",
+      "tdoServiceName": "Осуществление делопроизводства",
+      "ddo": 30,
+      "ddoName": "Координация визирования и подписания документов Заказчика",
+      "ddoServiceName": "Координация визирования и подписания документов Заказчика"
+    }
+  ],
+  "compensation": [
+     {
+      "value": "талоны на питание",
+      "comment": "Комментарий",
+      "provider": "содексо",
+      "inVoice": "да",
+      "providedBy": {
+        "value": "АНКОР",
+        "code": 2
+      },
+      "id": 4,
+      "name": "Питание",
+      "conditions": "",
+      "compensation": {
+        "value": "5000",
+        "type": 5,
+        "name": "Компенсация"
+      },
+      "coordinateWithClient": {
+        "value": "да",
+        "code": 1
+      },
+      "bossChargesStr": "отображаются",
+      "payment": {
+        "mode": 9,
+        "name": "Фикс."
+      },
+      "mentionedInTD": {
+        "value": "да",
+        "code": 1
+      },
+      "town": -1,
+      "flags": 0,
+      "fee": "12000"
+    }
+  ],
+  "groups": [
+    {
+      "group": 1,
+      "code": 4,
+      "type": 2,
+      "typeName": "Type Name",
+      "name": "Проект"
+    },
+    {
+      "group": 2,
+      "code": 4,
+      "type": 2,
+      "typeName": "Type Name",
+      "name": "Группа1"
+    },
+    {
+      "group": 3,
+      "code": 4,
+      "type": 2,
+      "typeName": "Type Name",
+      "name": "Группа2"
+    },
+    {
+      "group": 4,
+      "code": 4,
+      "type": 2,
+      "typeName": "Type Name",
+      "name": "Группа3"
+    },
+  ],
+  "infrastructure": [
+     {
+      "value": "талоны на питание",
+      "comment": "Комментарий",
+      "provider": "содексо",
+      "inVoice": "да",
+      "providedBy": {
+        "value": "АНКОР",
+        "code": 2
+      },
+      "id": 4,
+      "name": "Питание",
+      "conditions": "",
+      "coordinateWithClient": {
+        "value": "да",
+        "code": 1
+      },
+      "bossChargesStr": "отображаются",
+      "payment": {
+        "mode": 9,
+        "name": "Фикс."
+      },
+      "mentionedInTD": {
+        "value": "да",
+        "code": 1
+      },
+      "town": -1,
+      "flags": 0,
+      "fee": "12000"
+    }
+  ]
+}
+    </syntaxhighlight>
+
+====change-service====
+Идентичен expand-service<ref>http://help.heliosoft.ru/issues/54647</ref>, но на запросы сохранения нужно ещё передавать обязательеное поле '''employee'''.
+Для самого первого запроса нужно сначала получить предустановленные данные из '''change-service-start''', которому в GET запросе надо передать project, employee и workerKey<ref>http://help.heliosoft.ru/issues/54492</ref>. 
+{| class="wikitable"
+|-
+! поле !! DataCnv !!Описание
+|-
+| city || CITYKEY || город из проекта<ref>http://help.heliosoft.ru/issues/54168#note-9</ref>
+|-
+| workcity || WORKCITY || город, где человек реально работает
+|-
+| allSubtreeItems || - || Флаг для объектов внутри services, если true, то выбраны все объекты внутри nodes текущего объекта<ref>Нужно для тикета http://help.heliosoft.ru/issues/54239</ref>
+|}
+    <syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 23,
+  // Общие для всех
+  "draft": true,
+  "comment": "Сломал ногу",
+  "state:" "inwork",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Кузовкина Марина"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "service": {
+    "contacts": {
+      "name": "рек ФИО",
+      "email": "рек email",
+      "phone": "рек тел"
+    },
+    "nonStandartDay": 1,
+    "work": {
+      "place": "место работы (адрес)",
+      "time": ""
+    },
+    "dateFrom": "20160715",
+    "clientStake": "",
+    "contractType": 4,
+    "payment": {
+      "other": "Другие типы оплаты (если нет в словаре нужной)",
+      "value": 400,
+      "mode": 9,
+      "_embedded": {
+        "mode": {
+          "code": 9,
+          "name": "Фикс."
+        },
+        "currency": {
+          "code": 10,
+          "name": "Фунты"
+        }
+      },
+      "currency": 10
+    },
+    "additionDaysNumber": 5,
+    "qualification": "треб к квалиф",
+    "recommended": "byClient",
+    "monthTable": {
+      "id": 213,
+      "name": "Bacилeнкo-clientStaff Светлана",
+      "phone": "(7903) 578-1126",
+      "email": "vasilenko@experium.ru"
+    },
+    "monthReport": {
+      "id": 71,
+      "name": "Рогозин Алексей Юрьевич",
+      "email": "dubets@experium.ru"
+    },
+    "city": 0,
+    "workcity": "Москва",
+    "urkService": 7047,
+    "amount": 2,
+    "additional": "Доп. Услуги",
+    "bonus": "Да, много печенек",
+    "_embedded": {
+      "city": {
+        "code": 0,
+        "name": "Город"
+      },
+      "contractType": {
+        "code": 4,
+        "value": "Тип контракта"
+      },
+      "nonStandartDay": {
+        "code": 1,
+        "value": "Да"
+      }
+    },
+    "cityOther": "Другой город (если нет в словаре нужного)",
+    "position": {
+      "bdo": { 
+        "id": 1911,
+        "name": "Услуги по административной поддержке продаж"   
+      },
+      "id": 16,
+      "name": "Ассистент по налогообложению",
+      "companyClassification": 19054
+      "_embedded": {
+        "code": 19054,
+        "name": ""
+      }
+    },
+    "comment": "Комментарий"
+  },
+  "services": [
+    {
+      "bdo": 89,
+      "bdoServiceName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "tdo": 28,
+      "tdoServiceName": "Осуществление делопроизводства",
+      "ddo": 90,
+      "ddoServiceName": "Ведение внутреннего электронного и бумажного документооборота на участке расчета себестоимости"
+    },
+    {
+      "bdo": 89,
+      "bdoServiceName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "tdo": 28,
+      "tdoServiceName": "Осуществление делопроизводства",
+      "ddo": 30,
+      "ddoServiceName": "Координация визирования и подписания документов Заказчика"
+    }
+  ],
+  "duties": [
+    {
+      "bdo": 89,
+      "bdoName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "bdoServiceName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "tdo": 28,
+      "tdoName": "Осуществление делопроизводства",
+      "tdoServiceName": "Осуществление делопроизводства",
+      "ddo": 90,
+      "ddoName": "Ведение внутреннего электронного и бумажного документооборота на участке расчета себестоимости",
+      "ddoServiceName": "Ведение внутреннего электронного и бумажного документооборота на участке расчета себестоимости"
+    },
+    {
+      "bdo": 89,
+      "bdoName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "bdoServiceName": "Услуги по административной поддержке на участке расчета себестоимости",
+      "tdo": 28,
+      "tdoName": "Осуществление делопроизводства",
+      "tdoServiceName": "Осуществление делопроизводства",
+      "ddo": 30,
+      "ddoName": "Координация визирования и подписания документов Заказчика",
+      "ddoServiceName": "Координация визирования и подписания документов Заказчика"
+    }
+  ],
+  "infrastructure": [
+     {
+      "value": "талоны на питание",
+      "comment": "Комментарий",
+      "provider": "содексо",
+      "inVoice": "да",
+      "providedBy": {
+        "value": "АНКОР",
+        "code": 2
+      },
+      "id": 4,
+      "name": "Питание",
+      "conditions": "",
+      "coordinateWithClient": {
+        "value": "да",
+        "code": 1
+      },
+      "bossChargesStr": "отображаются",
+      "payment": {
+        "mode": 9,
+        "name": "Фикс."
+      },
+      "mentionedInTD": {
+        "value": "да",
+        "code": 1
+      },
+      "town": -1,
+      "flags": 0,
+      "fee": "12000"
+    }
+  ],
+  "compensation": [
+     {
+      "value": "талоны на питание",
+      "comment": "Комментарий",
+      "provider": "содексо",
+      "inVoice": "да",
+      "providedBy": {
+        "value": "АНКОР",
+        "code": 2
+      },
+      "id": 4,
+      "name": "Питание",
+      "conditions": "",
+      "compensation": {
+        "value": "5000",
+        "type": 5,
+        "name": "Компенсация"
+      },
+      "coordinateWithClient": {
+        "value": "да",
+        "code": 1
+      },
+      "bossChargesStr": "отображаются",
+      "payment": {
+        "mode": 9,
+        "name": "Фикс."
+      },
+      "mentionedInTD": {
+        "value": "да",
+        "code": 1
+      },
+      "town": -1,
+      "flags": 0,
+      "fee": "12000"
+    }
+  ]
+}
+</syntaxhighlight>
+
+==== production ====
+<syntaxhighlight lang="javascript">
+{
+  // Редактирование 
+  "id": 78,
+  // Сохранение
+  "workerKey": 23,
+  // Общие для всех
+  "draft": true,
+  "comment": "Сломал ногу",
+  "state:" "inwork",
+  "parentState": "ready",
+  "attachedDocExist": true,
+  "attachedDocNumber": 10,
+  "type": "business-trip",
+  // production block begins
+  "sendDate": "200170822",
+  "receiveDate": "200170824",
+  "addDate": "200170825",
+  "viewFlag": 2,
+  // production block ends
+  "date": {
+    "from": "20160810",
+    "to": "20160820"
+  },
+  "childrenStates": {
+    "state": "inwork",
+    "name": "Подготовить план",
+    "code": 222
+  },
+  "employee": 187,
+  "project": 1,
+  "coordinator": 33,
+  "_embedded": { // Поля _embedded игнорируются при отправки данных на сервер
+    "employee": {
+      "id": 187,
+      "name": "Кузовкина Марина"
+    },
+    "project": {
+      "id": 1,
+      "name":"имя проекта(12/01/2016)"
+    },
+    "coordinator": {
+      "id": 1, 
+      "name": "ФИО координатора"
+    }
+  },
+  "documents": [
+    {
+      "documentKey": 1146,
+      "name": "Отпуск (Кузовкина М.)",
+      "place": 12
+    }
+  ],
+  "parent": {
+    "state": 1,
+    "name": "Задача Командировка (Панарина Е.)"
+  },  
+  "businessTrip": {
+    "destination": "",
+    "goal": "",
+    "payment": {
+      "code": 1,
+      "prepayment": "Да", // Приходит только на ответ
+      "value": 1000.50,
+      "currency": 1,
+      "_embedded": {
+          "currency": {
+              "id": 1,
+              "name": "!RUR" 
+          }
+      }
+    }
+  },
+  "outlay": [
+    {
+      "name": "Проживание",
+      "price": 123.21,
+      "number": 1,
+      "amount": 2222
+    }
+  ],
+  "duties": [
+    {
+      "ddo": "123",
+      "ddoName": "ДО 123",
+      "kpiType": "3",
+      "kpiName": "Primary",
+      "kpiValue": 3,
+      "kpiComment": "Комментарий ДО",
+      "planValue": "да"
+    }
+  ]
+}
+</syntaxhighlight>
+
+===== Получение задачи =====
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/task/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "id": 256,
+  "state": 257,
+  "sendDate": "String",
+  "receiveDate": "String",
+  "addDate": "String",
+  "viewFlag": 258,
+  "draft": false,
+  "document": {
+    "attachedDocument": false,
+    "count": 259
+  },
+  "comment": "String",
+  "COMMENTFORLK": "String",
+  "project": [
+    {
+      "id": 260,
+      "type": "Project",
+      "text": "РМ-плюс (07/12/2016 KhavkinaTest2)"
+    }
+  ],
+  "coordinator": [
+    {
+      "id": 261,
+      "type": "Project",
+      "text": "Хавкина Елизавета Андреевна"
+    }
+  ],
+  "aboutpplkey": [
+    {
+      "id": 262,
+      "type": "String",
+      "text": "String"
+    }
+  ],
+  "duties": [
+    {
+      "bdo": 263,
+      "bdoName": "String",
+      "bdoServiceName": "String",
+      "tdo": 264,
+      "tdoName": "String",
+      "tdoServiceName": "String",
+      "ddo": 265,
+      "ddoName": "String",
+      "ddoServiceName": "String",
+      "useflag": false,
+      "kpiType": "String",
+      "kpiName": "String",
+      "kpiComment": "String",
+      "kpiValue": 266
+    }
+  ],
+  "task": [
+    {
+      "id": 267,
+      "fullname": "String"
+    }
+  ]
+}
+</syntaxhighlight>
+
+===== Ввод результата =====
+Запрос:
+<syntaxhighlight lang="html5">
+PUT /v1/os/task/:ID
+</syntaxhighlight>
+
+<syntaxhighlight lang="javascript">
+{
+  "duties": [
+    {
+      "kpiValue": 9,
+      "kpiComment": "Что-то там",
+      "ddo": 3,
+      "bdo": 2,
+      "tdo": 78114
+    }
+  ]
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "id": 10223
+}
+</syntaxhighlight>
+
+=== Создание ===
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/application/TYPE
+</syntaxhighlight>
+Cм. [[Experium_Outsourcing#Структура заявки|Структура заявки]]
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "id": 5
+}
+</syntaxhighlight>
+
+=== Получение ===
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/application/TYPE/ID
+</syntaxhighlight>
+Возможные значения для state в json'e:
+{| class="wikitable"
+|-
+! state !! Описание списка !! DataCnv
+|-
+|draft || в работе / на согласовании || 1
+|-
+|draft || в работе / на согласовании || 2
+|-
+|inwork || в работе / на согласовании || 3
+|-
+|viewed ||просмотренно || 4
+|-
+|overdue ||заблокировано/просрочено || 5
+|-
+|approved ||согласовано || 7
+|-
+|closed || завершено || 1
+|- 
+|rejected || отклонено || 8
+|-
+|rejected-by-sender ||  отклонено отправителем || 9
+|}
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+Cм. [[Experium_Outsourcing#Структура заявки|Структура заявки]]
+
+=== Редактирование ===
+Запрос:
+<syntaxhighlight lang="html5">
+PUT /v1/os/application/TYPE/ID
+</syntaxhighlight>
+Cм. [[Experium_Outsourcing#Структура заявки|Структура заявки]]
+<br />
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "id": 5
+}
+</syntaxhighlight>
+
+=== Получение списка ===
+'''get-параметры'''
+
+{| class="wikitable"
+|-
+! Параметр !! Назначение
+|-
+| project || Проект
+|-
+| approved || Одобрено
+|-
+| notreaded || Непрочитано
+|-
+| rejected || Отклонено
+|-
+| inwork || В работе
+|-
+| workerKey || id работника(BOSS)
+|-
+| employee || id работника(наша БД)
+|}
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/application/TYPE?project=ID&approved=true&notreaded=true&rejected=true&inwork=true
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+Выдаётся json-массив списка заявок. См. [[Experium_Outsourcing#Структура заявки|структуру заявки]].
+
+=== Одобрение ===
+
+{| class="wikitable"
+|-
+! TYPE !! Назначение
+|-
+| absence-confirmation || Отсутствие
+|-
+| sick-leave-confirmation || Отпуск по болезни
+|-
+| business-trip-confirmation || Командировка
+|-
+| vacation-confirmation || Отпуск
+|-
+| dismissal-confirmation || Увольнение
+|-
+| start-work-confirmation || Подтверждение клиента
+|}
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/application/TYPE/ID/approve
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "comment": "Отпуск по болезни одобряю."
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+204
+</syntaxhighlight>
+
+=== Отклонение ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/application/TYPE/ID/cancel
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "comment": "Отпуск по болезни одобряю."
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+204
+</syntaxhighlight>
+
+=== Перевод в работу ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/application/TYPE/ID/inwork
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "comment": "Продолжаем работать"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+204
+</syntaxhighlight>
+
+=== Закрытие ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/application/TYPE/ID/closed
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "comment": "Человек утонул"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+204
+</syntaxhighlight>
+
+=== Статистика по согласованиям ===
+
+'''TYPE'''<ref>http://help.heliosoft.ru/issues/53942</ref>
+{| class="wikitable"
+|-
+! TYPE !! DataCnv !! Назначение
+|-
+| absence-confirmation  || OutsTask_NON_APPEARANCE_CONFIRMATION || Одобрение на отсутствие 
+|-
+| sick-leave-confirmation || OutsTask_SICK_LEAVE_CONFIRMATION || Одобрение на отпуск по болезни
+|-
+| business-trip-confirmation || OutsTask_BUSINESS_TRIP_CONFIRMATION || Одобрение на командировку 
+|-
+| vacation-confirmation || OutsTask_VACATION_CONFIRMATION ||Одобрение на отпуск 
+|-
+| dismissal-confirmation || OutsTask_DISMISSAL_CONFIRMATION || Одобрение на увольнение 
+|-
+| all || OutsAllStat || Статистика по всем подтверждениям
+|-
+| people || PplApproval || Cтатистика по согласованию людей
+|-
+| projects || PrjApproval || Статистика по согласованию проектов
+|-
+| request || Request || Статистика по запросам
+|}
+<br />
+'''GET параметры'''
+<br />
+''' По крайней мере один из флагов должен быть true '''
+{| class="wikitable"
+|-
+! Флаг !! DataCnv !! Назначение !! Значение по-умолчанию
+|-
+| responsible || params/IsOtvFlag || Показывать те, где запрашивающий - ответственный || '''false'''
+|-
+| sender || params/IsSenderFlag || Показывать те, где запрашивающий - создатель заявки || '''false'''
+|}
+
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/application/stats/TYPE
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "workStartConfirmation": {
+    "approved": 0,
+    "inwork": 1,
+    "canceled": 1,
+    "notreaded": 1,
+    "rejected": 1
+  },
+  "dismissalConfirmation": {
+    "approved": 0,
+    "inwork": 1,
+    "canceled": 1,
+    "notreaded": 1,
+    "rejected": 1
+  },
+  "absenceConfirmation": {
+    "approved": 1,
+    "inwork": 0,
+    "canceled": 0,
+    "notreaded": 0,
+    "rejected": 0
+  },
+  "vacationConfirmation": {
+    "approved": 1,
+    "inwork": 0,
+    "canceled": 1,
+    "notreaded": 1,
+    "rejected": 1
+  },
+  "sickLeaveConfirmation": {
+    "approved": 1,
+    "inwork": 0,
+    "canceled": 0,
+    "notreaded": 0,
+    "rejected": 1
+  },
+  "businessTripConfirmation": {
+    "approved": 1,
+    "inwork": 0,
+    "canceled": 0,
+    "notreaded": 1,
+    "rejected": 1
+  },
+  "nonAppearanceConfirmation": {
+    "approved": 12,
+    "inwork": 4,
+    "canceled": 5,
+    "notreaded": 0,
+    "rejected": 1
+  },
+  "gpdBusinessTripConfirmation": {
+    "approved": 911,
+    "inwork": 33,
+    "canceled": 0,
+    "notreaded": 0,
+    "rejected": 90
+  }
+}
+</syntaxhighlight>
+
+== Список курсов ==
+Связанные задачи: [http://help.heliosoft.ru/issues/53441 Получение списка курсов для блока Обучение]
+
+GET параметры могут иметь следующие значения:
+
+{|  class="wikitable"
+! ''Параметр'' 
+! ''DataCnv''
+! ''Назначение''
+|-
+| approved
+| GetCloseFlag
+| Прошёл курс
+|-
+| inwork
+| GetInWorkFlag
+| На рассмотрении
+|-
+| canceled
+| GetAnnulFlag
+| Отменили тест
+|-
+| rejected
+| GetCancelFlag
+| Отказался
+|-
+| notreaded
+| GetNotReadFlag
+| Не прочитаны
+|}
+
+По-умолчанию они ставятся в false
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/courses
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+[
+  {
+    "participant": 12,
+    "_embedded": {
+      "sender": {
+        "id": 187,
+        "name": "Кузовкина Марина"
+      },
+      "organization": {
+        "id": 2,
+        "name": "MyCompany"
+      },
+      "responsible": {
+        "id": 187,
+        "name": "Кузовкина Марина"
+      },
+      "project": {
+        "id": 58,
+        "name": "Nestle (14/06/2016 Инженеры)"
+      },
+      "participant": {
+        "id": 12,
+        "name": "Получатель И.О."
+      },
+      "senderOrganization": {
+        "id": 2,
+        "name": "MyCompany"
+      }
+    },
+    "id": 599,
+    "sendTime": "2316",
+    "responsible": 187,
+    "project": 58,
+    "sender": 187,
+    "name": "Тренировочный курс1",
+    "sendDate": "20160808",
+    "organization": 2,
+    "senderOrganization": 2,
+    "state": "inwork",
+    "draft": true
+  }
+]
+</syntaxhighlight>
+
+'''Статусы'''
+{| class="wikitable"
+|-
+! state !! DataCnv !!описание  
+|-
+| notinwork || 1 || не просмотрено, не в работе
+|-
+| inwork || 3 ||просмотрено, в работе
+|-
+| finished || 7 ||  курс пройдет (переходит в это сост, когда  draft меняют в false)
+|}
+
+== Список тестов ==
+
+GET параметры могут иметь следующие значения:
+
+{|  class="wikitable"
+! ''Параметр'' 
+! ''DataCnv''
+! ''Назначение''
+|-
+| approved
+| GetCloseFlag
+| Согласованы
+|-
+| inwork
+| GetInWorkFlag
+| На рассмотрении
+|-
+| canceled
+| GetAnnulFlag
+| Отменены
+|-
+| rejected
+| GetCancelFlag
+| Отклонены
+|-
+| notreaded
+| GetNotReadFlag
+| Не прочитаны
+|}
+
+По-умолчанию они ставятся в false
+
+Запрос<ref>http://help.heliosoft.ru/issues/54076</ref>:
+<syntaxhighlight lang="html5">
+GET /v1/os/tests
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+[
+  {
+    "participant": 12,
+    "_embedded": {
+      "sender": {
+        "id": 187,
+        "name": "Кузовкина Марина"
+      },
+      "responsible": {
+        "id": 187,
+        "name": "Кузовкина Марина"
+      },
+      "project": {
+        "id": 58,
+        "name": "Nestle (14/06/2016 Инженеры)"
+      },
+      "participant": {
+        "id": 12,
+        "name": "Получатель И.О."
+      }
+    },
+    "id": 599,
+    "sendTime": "2316",
+    "responsible": 187,
+    "project": 58,
+    "sender": 187,
+    "name": "Тренировочный курс1",
+    "sendDate": "20160808"
+    "state": "inwork",
+    "draft": true
+  }
+]
+</syntaxhighlight>
+
+'''Статусы'''
+{| class="wikitable"
+|-
+! state !! DataCnv !!описание  
+|-
+| notinwork || 1 || не просмотрено, не в работе
+|-
+| inwork || 3 ||просмотрено, в работе
+|-
+| finished || 7 ||  курс пройдет (переходит в это сост, когда  draft меняют в false)
+|}
+
+== Сводки ==
+=== Расписание ===
+'''Значение absence/type'''
+
+{| class="wikitable"
+|-
+! absence type !! DataCnv !! Значение
+|-
+| none || 0 || не заполнен
+|-
+| holiday || 1 || выходной
+|-
+| absence || 2 || отсутствие
+|-
+| sick-leave || 3 || больничный
+|-
+| business-trip || 4 || командировка
+|-
+| vacation || 5 || отпуск
+|-
+| dismissal-outdated-contract || 6 || Увольнение. Истёк контракт
+|-
+| dismissal || 7 || Увольнение
+|}
+
+'''Значение absence/state'''
+
+{| class="wikitable"
+|-
+! absence state !! DataCnv !! Значение
+|-
+|-
+|none||0|| отсутствует
+|-
+|request||1|| запрос
+|-
+|created||3|| создано
+|-
+|sentToBoss||5|| отправлено в БД Босс
+|-
+|recievedByBoss||7|| получное БД
+|-
+|collect||9|| сохранено
+|-
+|prepare||11|| готовится
+|-
+|ready||13|| готово
+|-
+|sign||15|| одобрено
+|-
+|executed||30|| выполнено
+|-
+|koexecuted||14|| КО проведена
+|}
+'''Значение dayType'''
+
+{| class="wikitable"
+|-
+! dayType !! DataCnv !! Значение
+|-
+| nowork || 0 || не работал
+|-
+| freeday || 1 || выходной
+|-
+| workday || 2 || рабочий
+|-
+| holiday || 3 || праздничный
+|}
+
+'''GET параметры'''
+{| class="wikitable"
+|-
+! get параметр !! DataCnv !! Значение
+|-
+| project || prjkey || Проект. Обязательный
+|-
+| employee || stafferkey || id сотрудника
+|-
+| datefrom || date || Дата с
+|-
+| dateto || date || Дата по
+|-
+| URLEncFilter || lastnamefilter || Фильтр по ФИО
+|}
+
+Примечания <ref>http://help.heliosoft.ru/issues/53689</ref>:
+
+'''Личный кабинет клиента'''
+
+employee - если не указан, то будет на всех стафферов проекта
+
+'''Личный кабинет сотрудника'''
+
+employee - не нужен. Табель может только на себя запрашивать
+
+Запрос:
+<syntaxhighlight lang="text">
+GET /v1/os/timesheet?dateto=20160920&datefrom=20160910
+</syntaxhighlight>
+Ответ:
+<syntaxhighlight lang="javascript">
+[
+  {
+    "participant": {
+      "id": 371,
+      "name": "Иоган Васильевич Хрустов"
+    },
+    "day": {
+      "to": 30,
+      "from": 14
+    },
+    "position": "Директор регионального развития",
+    "days": [
+      {
+        "index": 14,
+        "absence": {
+          "state": "request",
+          "type": "none" 
+        },
+        "dayType": "workday",
+        "workHours": 35.5,
+        "day": 1,
+        "month": 2,
+        "year": 2016
+      },
+      {
+        "index": 15,
+        "absence": {
+          "state": "request",
+          "type": "none" 
+        },
+        "dayType": "workday",
+        "workHours": 35.5,
+        "day": 1,
+        "month": 2,
+        "year": 2016
+      }
+    ]
+  }
+]
+</syntaxhighlight>
+
+=== Сводка координаторов ===
+
+Если project не указан, выводится полный список координаторов. 
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/coordinators?project=123
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+[
+  {
+    "name": "Боганов Евгений",
+    "id": 54
+  },
+  {
+    "name": "Хубларова Маргарита Александровна",
+    "id": 55
+  }
+]
+</syntaxhighlight>
+
+=== Сводка проектов ===
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/client/project
+</syntaxhighlight>
+
+GET параметры могут иметь следующие значения:
+
+{|  class="wikitable"
+! ''Параметр'' 
+! ''Назначение''
+|-
+| approved
+| Согласованы
+|-
+| inwork
+| На рассмотрении
+|-
+| canceled
+| Отменены
+|-
+| rejected
+| Отклонены
+|-
+| finished
+| Завершены
+|-
+| groupByCategory
+| Групировать по категории
+|}
+
+
+Структура проекта: [[Experium_Outsourcing#Получение проекта|Получение проекта]]
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+groupByCategory=true
+<syntaxhighlight lang="javascript">
+[
+  {
+    "name": "Запрос",
+    "list": [
+      {
+        // Project Experium_Outsourcing#Получение проекта
+      }
+    ]
+  },
+  {
+    "name": "В работе",
+    "list": [
+       {
+         // Project Experium_Outsourcing#Получение проекта
+       }
+    ]
+  }
+]
+</syntaxhighlight>
+
+groupByCategory=false
+<syntaxhighlight lang="javascript">
+[
+  {
+    // Project Experium_Outsourcing#Получение проекта
+  }
+]
+</syntaxhighlight>
+
+=== Сводка специалистов ===
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/client/specialists{/xls}
+</syntaxhighlight>
+
+В случае URI c /xls будет сгенерирован Microsoft Excel файл вместо Json ответа.
+
+GET параметры могут иметь следующие значения:
+
+{|  class="wikitable"
+! ''Параметр'' 
+! ''Назначение''
+! ''Обязательный''
+|-
+| project
+| проект
+| '''Да'''
+|-
+| candidates
+| показывать кандидатов
+| Нет
+|-
+| employed
+| показывать трудоустроенных
+| Нет
+|-
+| excluded
+| показывать исключенных
+| Нет
+|-
+| moved
+| переведенные
+| Нет
+|-
+| groupByStatus
+| группировать по статусу
+| Нет
+|-
+| URLEncFilter
+| фильтр по ФИО
+| Нет
+|}
+
+Ответ с groupByStatus=true:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+[
+  {
+    "name": "Кандидаты",
+    "list": [
+      {
+        "position": "Бухгалтер",
+        "status": "Кандидат",
+        "startWorkDate": "20161004",
+        "lastWorkStartDate": "20161004",
+        "vacationDays": 0,
+        "salary": 20000.34,
+        "currency": "!RUR"
+        "id": 154,
+        "name": "Валеева Ильмира",
+        "city": "Мюнхен",
+        "contract": 1,
+        "dismissalDate": "20170302",
+        "_embedded": {
+          "id": 1,
+          "name": "ГПД"
+        },
+        "compensations": [
+          {
+            "type": "Доплата за вредные условия труда"
+          },
+          {
+            "type": "Выплата при расторжении ТД"
+          }
+        ],
+        "infrastructure": [
+          {
+             "type": "Моб. связь"
+          },
+          {
+             "type": "Аренда офиса"
+          },
+          {
+             "type": "Мед. осмотр"
+          }
+        ],
+        "attachment": "Приложение1",
+        "duties": [
+          {
+            "text": "Ведение бухгалтерского учета"
+          },
+          {
+            "text": "Сбор и анализ первичных документов"
+          },
+          {
+            "id": 97,
+            "offset": 3,
+            "text": "Прием и контроль корректности первичной документации по соответствующим участкам бухгалтерского учета"
+          }
+        ],
+        "service": [
+          {
+            "text": "Услуга по организации бухгалтерского обслуживания, учета и отчетности"
+          },
+          {
+            "offset": 3,
+            "text": "Ведение бухгалтерского учета"
+          },
+          {
+            "offset": 3,
+            "text": "Сбор и анализ первичных документов"
+          }
+        ]
+      }
+    ],
+    "count": 1
+  },
+  {
+    "name": "Трудоустроены",
+    "count": 0
+  },
+  {
+    "name": "Исключены",
+    "count": 0
+  }
+]
+</syntaxhighlight>
+
+Ответ с groupByStatus=false:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+[
+  {
+    "position": "Бухгалтер",
+    "status": "Кандидат",
+    "vacationDays": 0,
+    "salary": 0,
+    "user": [
+      {
+        "id": 154,
+        "name": "Валеева Ильмира"
+      }
+    ],
+    "city": "Мюнхен",
+    "contract": "ГПД",
+    "attachment": "",
+    "compensations": [
+      {
+        "type": "Доплата за вредные условия труда"
+      },
+      {
+        "type": "Выплата при расторжении ТД"
+      }
+    ],
+     "infrastructure": [
+       {
+         "type": "Моб. связь"
+       },
+       {
+         "type": "Аренда офиса"
+       },
+       {
+         "type": "Мед. осмотр"
+       }
+    ],
+    "duties": [
+      {
+        "text": "Ведение бухгалтерского учета"
+      },
+      {
+        "text": "Сбор и анализ первичных документов"
+      },
+      {
+        "id": 97,
+        "offset": 3,
+        "text": "Прием и контроль корректности первичной документации по соответствующим участкам бухгалтерского учета"
+      }
+    ],
+    "service": [
+      {
+        "text": "Услуга по организации бухгалтерского обслуживания, учета и отчетности"
+      },
+      {
+        "offset": 3,
+        "text": "Ведение бухгалтерского учета"
+      },
+      {
+        "offset": 3,
+        "text": "Сбор и анализ первичных документов"
+      }
+    ]
+  }
+]
+</syntaxhighlight>
+
+== Проект  ==
+=== Получение проекта  ===
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/client/project/ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "entityId": 43,
+  "inworkdate": "20160614",
+  "numeqpos": 0,
+  "paymentdelay": 10,
+  "towns": [
+    {
+      "name": "Саратов",
+      "id": 242
+    },
+    {
+      "name": "Ярославль",
+      "id": 21
+    },
+    {
+      "name": "Самара",
+      "id": 22
+    },
+    {
+      "name": "Нижний Новгород",
+      "id": 23
+    }
+  ],
+  "position": {
+    "type": "Project",
+    "id": 54,
+    "text": "Инженеры"
+  },
+  "conditions": "Фикс.вознаграждение",
+  "voiceDate": "999",
+  "amount": {
+    "min": 0,
+    "max": 0
+  },
+  "id": 54,
+  "numeqposRest": 0,
+  "accessLevel": 1,
+  "status": "Принят",
+  "feetype": "Фикс.вознаграждение",
+  "reqdate": "20160610",
+  "duration": 54,
+  "participants": [
+    {
+      "type": "People",
+      "id": 167,
+      "text": "Отв. - Пастухова Надежда Юрьевна"
+    },
+    {
+      "type": "People",
+      "id": 17,
+      "text": "Nestle - Мартиросова Елена Андреевна (Контактное лицо)"
+    },
+    {
+      "type": "People",
+      "id": 213,
+      "text": "Nestle - Bacилeнкo-clientStaff Светлана (Инспектор по кадрам)"
+    }
+  ],
+  "parentProject": {
+    "type": "Project",
+    "id": 53,
+    "text": "Nestle (10/06/2016 Outsource Инженеры)"
+  },
+  "responsible": {
+    "type": "People",
+    "id": 167,
+    "text": "Пастухова Надежда Юрьевна"
+  },
+  "company": {
+    "type": "Company",
+    "id": 3,
+    "text": "Nestle"
+  },
+  "contacts": [
+    {
+      "type": "People",
+      "id": 17,
+      "text": "Nestle - Мартиросова Елена Андреевна (Контактное лицо)"
+    },
+    {
+      "type": "People",
+      "id": 213,
+      "text": "Nestle - Bacилeнкo-clientStaff Светлана (Инспектор по кадрам)"
+    }
+  ],
+  "fees": [
+    {
+      "currency": {
+        "code": 1,
+        "name": "!RUR"
+      },
+      "service": {
+        "code": 7047,
+        "name": "BPA(L)"
+      },
+      "value": 25,
+      "type": {
+        "code": 1,
+        "name": "Коэффициент б/у отпускных"
+      },
+      "percent": 13.5
+    },
+    {
+      "currency": {
+        "code": 1,
+        "name": "!RUR"
+      },
+      "service": {
+        "code": 7046,
+        "name": "IndO"
+      },
+      "value": 2000.99,
+      "type": {
+        "code": 2,
+        "name": "Cтавка (в рублях с учетом отпускных)"
+      },
+      "percent": 20
+    }
+  ],
+  "classifiers": [
+    {
+      "name": "Индустрия",
+      "list": [
+        {
+          "id": 1001,
+          "offset": 1,
+          "text": "/Автобизнес"
+        }
+      ]
+    },
+    {
+      "name": "Функционал",
+      "list": [
+        {
+          "id": 2008,
+          "offset": 1,
+          "text": "/Административный персонал/Call-center"
+        }
+      ]
+    },
+    {
+      "name": "Уровень",
+      "list": [
+        {
+          "id": 3002,
+          "offset": 1,
+          "text": "/Специалист"
+        }
+      ]
+    },
+    {
+      "name": "Офис",
+      "list": [
+        {
+          "id": 13001,
+          "offset": 1,
+          "text": "/Main group"
+        }
+      ]
+    },
+    {
+      "name": "Услуга",
+      "list": [
+        {
+          "id": 34005,
+          "offset": 1,
+          "text": "/Аутсорсинг/BPA"
+        }
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "id": 1,
+      "place": 3,
+      "name": "Биль о правках",
+      "fileType": "jpg",
+      "comment": "Всем читать!",
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Дополнительная информация о проекте ===
+Список колонок которые нужно выводить в Web:
+{| class="wikitable"
+|-
+! Колонка !! Назначение 
+|-
+| type/name || Вид
+|-
+| compensation/name || Вид компенсации
+|-
+| value || Вид МО/материалов/оборудования
+|-
+| provider || Кем обеспечивается
+|-
+| providedBy/value || Кем обеспечивается
+|-
+| payment/name || Каким образом платится
+|-
+| compensation/value || Размер компенсации
+|-
+| conditions ||  Доп. условия
+|}
+''' Поля groups '''
+{| class="wikitable"
+|-
+! Поле !! Назначение !! Нужно передавать
+|- 
+| group || Идентификатор группы || '''Да'''
+|-
+| name || Название группы || '''Да'''
+|-
+| list/code || Идетификатор подгруппы || ''' Да '''
+|-
+| list/name || Название подгруппы || Нет
+|}
+Данные из groups передаются в поле groups для application/expand-service.
+<br />
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/client/project/ID/information
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "position": {
+    "type": "Project",
+    "id": 63,
+    "text": "Саратов"
+  },
+  "town": 4,
+  "_embedded": {
+    "town": {
+      "id": 4,
+      "name": "Владивосток"
+    }
+  },
+  "contractsTypeAllowed": [
+    {
+      "name": "GPD",
+      "id": 4
+    }
+  ],
+  "responsible": {
+    "type": "People",
+    "id": 167,
+    "text": "Пастухова Надежда Юрьевна"
+  },
+  "infrastructure": [
+    {
+      "value": "талоны на питание",
+      "comment": "комментарий",
+      "provider": "содексо",
+      "inVoice": "да",
+      "providedBy": {
+        "value": "АНКОР",
+        "code": 2
+      },
+      "id": 4,
+      "name": "Питание",
+      "conditions": "",
+      "compensation": {
+        "value": "5000",
+        "type": 5,
+        "name": "Компенсация"
+      },
+      "coordinateWithClient": {
+        "value": "да",
+        "code": 1
+      },
+      "bossChargesStr": "отображаются",
+      "payment": {
+        "mode": 9,
+        "name": "Фикс."
+      },
+      "mentionedInTD": {
+        "value": "да",
+        "code": 1
+      },
+      "town": -1,
+      "flags": 0,
+      "fee": "12000"
+    }
+  ],
+  "compensation": [
+    {
+      "value": "талоны на питание",
+      "comment": "комментарий",
+      "provider": "содексо",
+      "inVoice": "да",
+      "providedBy": {
+        "value": "АНКОР",
+        "code": 2
+      },
+      "id": 4,
+      "name": "Питание",
+      "conditions": "",
+      "compensation": {
+        "value": "5000",
+        "type": 5,
+        "name": "Компенсация"
+      },
+      "coordinateWithClient": {
+        "value": "да",
+        "code": 1
+      },
+      "bossChargesStr": "отображаются",
+      "payment": {
+        "mode": 9,
+        "name": "Фикс."
+      },
+      "mentionedInTD": {
+        "value": "да",
+        "code": 1
+      },
+      "town": -1,
+      "flags": 0,
+      "fee": "12000"
+    }
+  ],
+  "additionalInfrastructure": [
+    {
+      "town": 1,
+      "type": 2,
+      "vocabulary": 7
+    }
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "group": 2,
+      "list": [
+        {
+          "parentCode": 123,
+          "code": 23,
+          "name": "Группа 1"
+        }
+      ]
+    }
+  ]
+}
+</syntaxhighlight>
+
+== Анкета ==
+=== Структура анкеты ===
+
+{| class="wikitable"
+|-
+! поле !! DataCnv !! Назначение !! Примечания
+|-
+| education  || EDU  || Образование || 
+|-
+| additionalEducation<ref>http://help.heliosoft.ru/issues/54038</ref> || DOPEDU  || Дополнительное образование || 
+|-
+| nextEducation || NEXTEDU || Образование после ВУЗа || 
+|-
+| general/employmentHistory/whyHasNot || KADRYMAIN/EMPL_REASON_CODE || Причина по которой нет трудовой книжки<ref>Словарь NoEmploymentHistoryReason</ref> ||
+|-
+| military/seria || MILITARY/DOC_SERIA || Серия военного билета ||  '''Формат ввода: две буквы кириллицей, номер: семь цифр'''<ref>https://help.experium.ru/issues/54198</ref>
+|-
+| military/number || MILITARY/DOC_NUMBER || Номер военного билета || '''Формат ввода: две буквы кириллицей, номер: семь цифр'''<ref>https://help.experium.ru/issues/54198</ref>
+|}
+
+<syntaxhighlight lang="javascript">
+{
+  "gpd": true,
+  "form": {
+    "key": true,
+    "draft": false,
+    "attachedDocNumber": 4,
+    "attachedDocExist": true,
+    "show": {
+      "clothesSize": true,
+      "bankRequisites": false
+    }
+  },
+  "notExistDocument": [
+    {
+      "name": "Пасспорт",
+      "reason": "Потерял его"
+    },
+    {
+      "name": "Военный билет",
+      "reason": "Потерял"
+    }
+  ],
+  "family": [
+    {
+      "role": 1,
+      "name": "Дмитрий",
+      "surname": "Петрович",
+      "lastname": "Тересченко",
+      "_embedded": {
+        "role": {
+          "code": 1,
+          "value": "отец"
+        }
+      },
+      "birthDay": "16071982",
+      "documentKey": 5,
+      "phoneNumber": "+7939123456"
+    },
+    {
+      "role": 2,
+      "name": "Евдокия",
+      "surname": "Сергеевна",
+      "lastname": "Круглова",
+      "_embedded": {
+        "role": {
+          "code": 1,
+          "value": "мать"
+        }
+      },
+      "birthDay": "16071982",
+      "documentKey": 5,
+      "phoneNumber": "+7939123456"
+    }
+  ],
+  "passport": {
+    "name": 1212312,
+    "number": "1337",
+    "_embedded": {
+      "code": 9,
+      "value": "Паспорт гражданина РФ"
+    },
+    "whoIssue": "Миграционным отделением г. Читы по району Сосновый Бор",
+    "dateTo": "12022008",
+    "issueDate": "12022012",
+    "series": "9999",
+    "departmentCode": "817171",
+    "documentKey": {
+      "firstPage": 21,
+      "secondPage": 23
+    }
+  },
+  "general": {
+    "homeNumber": "16",
+    "firstName": "Кузьма",
+    "birthPlace": "Самара",
+    "birthDay": "17021998",
+    "middleName": "Александрович",
+    "married": 4,
+    "lastName": "Тополев",
+    "emplReason": "Причина",
+    "emplHistoryDocument": 56,
+    "sex": 1,
+    "mobileNumber": "+123456789",
+    "email": "user@host.ru",
+    "employmentHistory": {
+      "exist": 1,
+      "_embedded": {
+        "exist": {
+          "code": 1,
+          "value": "нет"
+        },
+        "whyHasNot": {
+          "code": 1,
+          "value": "Первое место работы"
+        }
+      },
+      "whyHasNot": 1,
+      "documentKey": 123
+    },
+    "inn": {
+      "number": "111111",
+      "documentKey": 5
+    },
+    "citizenship": 4,
+    "_embedded": {
+      "married": {
+        "code": 4,
+        "value": "женат"
+      },
+      "citizenship": {
+        "code": 2,
+        "value": "Россия"
+      },
+      "sex": {
+        "code":1,
+        "value": "Мужской"
+      }
+  },
+  "pension": {
+    "number": "77778888",
+    "documentKey": 888
+  },
+  "hotline": [
+    {
+      "role": 1,
+      "name": "Алексей Сергеевич Тополев",
+      "phoneNumber": "+1234567"
+    },
+    {
+      "role": 2,
+      "name": "Прасковья Ивановна Тополева",
+      "phoneNumber": "+12345673"
+    }
+  ],
+  "clothes": {
+    "height": 189,
+    "clothingSize": 28,
+    "shoeSize": 54,
+    "headressSize": 20,
+    "gloveSize": 22
+  },
+  "other":{
+    "benefits": "Ветеран ВОВ",
+    "limits": "limits"
+  },
+  "bankRequisites": {
+    "name":"Иван Иванович Иванов",
+    "account":"122233",
+    "passport":"678263 899991121",
+    "bank":"Сельхозбанк",
+    "bankIdentificationCode":"1221234974",
+    "inn":"12222332",
+    "kpp":"123",
+    "documentKey":23,
+    "bossKey":2 // bossKey ключ нужно просто передавать. Он нужен для БД.
+  },
+  "nextEducation": [
+    {
+      "doneYear": "2011",
+      "diplomName": "Имя диплома",
+      "type": 4,
+      "diplomNumber": "123123123",
+      "speciality": "Аудитор",
+      "diplomSeria": "123",
+      "skill": "Квалификация",
+      "institute": "Высшая Школа Экономики",
+      "_embedded": {
+        "type": {
+          "code": 23,
+          "value": "Тип диплома"
+        },
+        "diplomName": {
+          "code": 23,
+          "value": "Тип диплома"
+        }
+      },
+    }
+  ],
+  "officialAddress": {
+    "region": "Забайкальский край",
+    "district": "Серебряный бор",
+    "country": 1,
+    "fromDate": "20160801",
+    "toDate": "20161202",
+    "index": 11111,
+    "town": "Комсомольск-на-Амуре",
+    "street": "ул. Вязов",
+    "house": "23",
+    "building": "22",
+    "flat": "22"
+  },
+  "actualAddress": {
+    "index": "42",
+    "region": "Круглое море",
+    "town": "Анк-Моркпорк",
+    "street": "ул. Паточная",
+    "country": 1,
+    "house": "25",
+    "building": "23",
+    "flat": "123",
+    "_embedded": {
+      "id": 42,
+      "name": "Моркпорская империя"
+    },
+  },
+  "language": [
+    {
+      "name": 1,
+      "level": 2,
+      "_embedded": {
+        "name": {
+          "code": 1,
+          "value": "Русский"
+        },
+        "level": {
+          "level": 2,
+          "value": "Базовое владение"
+        }
+      }
+    },
+    {
+      "name": 2,
+      "level": 2,
+      "_embedded": {
+        "name": {
+          "code": 1,
+          "value": "Английский"
+        },
+        "level": {
+          "level": 2,
+          "value": "Базовое владение"
+        }
+      }
+    }
+  ],
+  "education": [
+    {
+      "doneYear": "1999",
+      "diplomName": 25,
+      "type": 2,
+      "diplomNumber": "12345678",
+      "speciality": "Программист",
+      "diplomSeria": "123",
+      "institute": "Московский Институт",
+      "skill": "Повар",
+      "documentKey": 2,
+      "_embedded": {
+        "type": {
+          "code": 1,
+          "value":"Адъюнктура"
+        },
+        "diplomName": {
+          "code": 2,
+          "value": "Сертификат"
+        }
+      }
+    },
+    {
+      "doneYear": "1999",
+      "diplomName": 25,
+      "type": 2,
+      "diplomNumber": "12345678",
+      "speciality": "Программист",
+      "diplomSeria": "123",
+      "institute": "Московский Институт",
+      "skill": "Повар",
+      "documentKey": 2,
+      "_embedded": {
+        "type": {
+          "code": 1,
+          "value":"Адъюнктура"
+        },
+        "diplomName": {
+          "code": 2,
+          "value": "Сертификат"
+        }
+      }
+    }
+    
+  ],
+  "additionalEducation": [
+    {
+      "type": "Дополнительное образование",
+      "doneYear": "2016",
+      "diplomName": 27,
+      "_embedded": {
+        "diplomName": {
+          "code": 34,
+          "value": "Сертификат"
+        }
+      },
+      "diplomNumber": "86523",
+      "speciality": "Ветеринар",
+      "diplomSeria": "526234",
+      "institute": "Московский Зоологический Институт"
+    }
+  ],
+  "military": {
+    "whoIssue": "Военный коммисариат при г. Благовещенск",
+    "issueDate": "01011998",
+    "seria": "ДВ1231238",
+    "number": "ЛА123467",
+    "_embedded": {
+      "role": {
+        "code": 2,
+        "value": "Лейтенант запаса"
+      },
+      "type": {
+        "code": 1,
+        "value": "Военный билет"
+      }
+    },
+    "role": 2,
+    "type": 1,
+    "documentKey": 33
+  },
+  "linkCollection": [
+    {
+      "id": 4,
+      "collection": 800,
+      "name": "111BPA_ANCOR_ДЛЯ КОЛЛЕГ.pdf",
+      "date": "20170627"
+    }
+  ],
+  "documents": [
+    {
+      "documentKey": 2,
+      "documentKeyInForm": 3,
+      "place": 12,
+      "name": "Документ",
+      "fileType": "jpeg"
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Создание анкеты ===
+
+Если параметр form/draft равен 1, то анкету можно редактировать. Если draft равен 0, то редактирование больше невозможно.
+
+Запрос:
+<syntaxhighlight lang="html5">
+PUT /v1/os/user/form
+</syntaxhighlight>
+Пример JSON'a: можно посмотреть в разделе "[[Experium_Outsourcing#Структура анкеты|Структура анкеты]]"
+
+Ответ:
+В ответе возвращается JSON-файл идентичный тому, который разработчик получает на GET запрос.
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+
+=== Получение анкеты ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/user/form?gpd=true
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+Если передается параметр '''gpd=true''', то возвращается ГПД форма работника. Пример JSON'a: можно посмотреть в разделе "[[Experium_Outsourcing#Структура анкеты|Структура анкеты]]"
+
+=== Получение анкеты трудоустроенного  ===
+
+После того как человека трудоустроят, у него должен открыться доступ к полному функционалу кабинета (до этого ему была доступна только анкета). И с этих пор в Анкету нужно будет выгружать данные по другому запросу (из кадрового досье). Структура данных такая же как в анкете
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/user/dossier
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+Пример JSON'a: можно посмотреть в разделе "[[Experium_Outsourcing#Структура анкеты|Структура анкеты]]"
+
+== Словари ==
+
+Пример запроса:
+<syntaxhighlight lang="html5">
+GET /v1/os/dictionary?type=Edu&URLEncESSFilter=substring
+</syntaxhighlight>
+'''URLEncESSFilter''' - фильтр для поиска по словарю
+Параметр type может принимать следующие значения:
+{| class="wikitable"
+|-
+! type !! Название в DataCnv !! Описание списка
+|-
+| AcademicTitle || BossAcademictitle ||Учёные звания
+|-
+| AcademicDegree || BossAcademicdegree || Учёные степени
+|-
+| Edu || BossEdutype || Типы образования
+|-
+| AddEdu || BossAddedutype || Дополнительное образование
+|-
+| EduForm || BossEduform || Форма образования
+|-
+| EduStatus || BossWhereedu || Текущее образование
+|-
+| EduQualification || BossEduQualify || Квалификация
+|-
+| Institute || BossInstitutetype || Типы образовательных учреждений
+|-
+| Military || BossMilitarydolg || Военная служба
+|-
+| Sicklist || BossBolnichnyjtype || Тип больничного 
+|-
+| Holiday || BossOtpusktype || Тип отпуска
+|-
+| PeopleDoc || BossPpldoctype || Документы удостоверяющие личность
+|-
+| FamilyStatus || BossFamilystatus || Семейное положение
+|-
+| PeopleRelative || BossPplrelative || Степени родства
+|-
+| CountryList || BossCountrylist || Страны
+|-
+| Citizenship || BossCitizen || Гражданство
+|-
+| LanguageLevel || BossLanguagelevel || Владение языком
+|-
+| EduDoc || BossEdudoclist || Документы об образовании 
+|-
+| InstituteList || BossInstitutelist || Образовательные учреждения
+|-
+| LanguageList || BossLanguagelist || Языки
+|-
+| Sex || Sex || Пол
+|-
+| MilitaryDoc || MilitaryDocType || Документы воинского учёта
+|-
+| LimitType || LimitType || Ограничение к деятельности
+|-
+| VacationType || VacationType || Тип отпуска
+|-
+| Currency || ValutaList || Валюта
+|-
+| YesNo || YesNoCombo || Да/Нет
+|-
+| PayType || OutsPayType || Тип выплаты
+|-
+| GPDPayment || GPDPaymentSystem || Системы оплаты для Гражданского Правового Трудового Договора
+|-
+| TDPayment || TDPaymentSystem || Системы оплаты для Трудового Договора
+|-
+| STDPaymen || STDPaymentSystem || Системы оплаты для Срочного Трудового Договора
+|-
+| TownList || TownList || Список городов
+|-
+| ContractType || OutsDogType || Типы договора
+|-
+| NoEmploymentHistoryReason || NoEmplHistReason || Причины отсутствия рабочей книжки
+|}
+
+Пример ответа:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+[
+    {
+        "id": 1,
+        "name": "Дошкольное образование"
+    },
+    {
+        "id": 2,
+        "name": "Начальное (общее) образование"
+    },
+    ...
+]
+</syntaxhighlight>
+
+== Работа с документами (BOSS) ==
+
+=== Получение документа (BOSS) ===
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/document?addkey=KEY&objkey=KEY&AuthType=(AsClient|AsStaff)
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+Raw File Data
+</syntaxhighlight>
+
+== Работа с документами пользователя ==
+
+=== Получение списка документов для заявки ===
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/user/document/APPLICATION/ID
+</syntaxhighlight>
+
+Ответ
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+[
+  {
+    "documentKey": 19,
+    "name": "Фотография (QKramarov Saveliy Viktorovich)"
+  },
+  {
+    "documentKey": 19,
+    "name": "Фотография (Sir. John D.)"
+  }
+]
+</syntaxhighlight>
+
+=== Получение документа ===
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/user/document/N?SYS_token=AAAUUAUAUAU&AuthType=AsClient&place=12
+</syntaxhighlight>
+
+Ответ
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+RAW DATA
+</syntaxhighlight>
+
+=== Сохранение документа ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/user/document
+</syntaxhighlight>
+
+Ожидается multipart form с полями:
+
+{| class="wikitable"
+|-
+! Название поля !! DataCnv !! Назначение !! Ограничения
+|-
+| id || /metadata/params/objkey || Ключ анкеты || '''Обязательное'''
+|-
+| type || /metadata/params/objtype || Заявление/Анкета || '''Обязательное'''
+|-
+| encode-base64-document || /metadata/Attachment/item/body  || Файл || '''Обязательное'''
+|-
+| document-name || /metadata/Attachment/item/name || название файла || '''Обязательное'''
+|-
+| document-type || /metadata/Attachment/item/docType || тип документа || '''Обязательное'''
+|-
+| file-ext || /metadata/Attachment/item/fileType || Расширение файла, без точки || '''Обязательное'''
+|}
+
+Все значения '''type''':
+{| class="wikitable"
+|-
+! type !! Назначение
+|-
+| form|| Анкета
+|-
+| formgpd|| Анкета ГПД
+|-
+| business-trip || Командировка
+|-
+| business-trip-gpd || Командировка ГПД
+|-
+| vacation || Отпуск
+|-
+| absence || Отсутствие
+|-
+| sick-leave || Больничный лист
+|-
+| personal-data-change || Запрос на изменение персональных данных
+|-
+| inquiries || Заказ справки
+|-
+| dismissal || Увольнение
+|-
+| self-dismissal || увольнение по собственному желанию
+|-
+| other || Прочее
+|-
+| call-me || Обратный звонок
+|-
+| appearance-gpd || Отсутствие
+|}
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "id": 256,
+  "documentKey": 777
+}
+</syntaxhighlight>
+
+=== Удаление документа ===
+
+'''Важно:''' удаление возможно только если анкета имеет статус draft в true.<br />
+Get параметр '''place''' обязателен.
+Запрос:
+<syntaxhighlight lang="html5">
+DELETE /v1/os/user/document/ANKETA_ID/DOCUMENT_ID?place=3&gpd=false
+</syntaxhighlight>
+
+Ответ
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+
+== Согласования приема ==
+
+=== Список заявок на согласование с клиентом ===
+
+GET параметры могут иметь следующие значения:
+
+{|  class="wikitable"
+! ''Параметр'' 
+! ''DataCnv''
+! ''Назначение''
+|-
+| approved
+| GetCloseFlag
+| Согласована
+|-
+| inwork
+| GetInWorkFlag
+| На рассмотрении
+|-
+| canceled
+| GetAnnulFlag
+| Отменена
+|-
+| rejected
+| GetCancelFlag
+| Отклонена
+|-
+| notreaded
+| GetNotReadFlag
+| Не прочитана
+|}
+
+По-умолчанию они ставятся в false
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/client/acceptance
+</syntaxhighlight>
+
+Ответ: см. '''структура заявки'''
+
+== Типы документов ==
+
+{| class="wikitable"
+|-
+! Название поля !! DataCnv !! Назначение
+|-
+| passportFirstPage || passport1 || Первая страница паспорта
+|-
+| passportSecondPage || passport2 || Вторая страница паспорта
+|-
+| inn || inn || ИНН
+|-
+| snils || snils || СНИЛС
+|-
+| diploma || diploma || Диплом
+|-
+| familyCertificate || family_cert || Свидетельство о браке/рождении
+|-
+| militaryId || militaryid || Военный билет
+|-
+| benefitCertificate || privil_cert || Льгота
+|-
+| employmentHistoryLastPage || last_empl || Последняя страница трудовой книжки
+|-
+| application || kadryppldoc || Для запросов application
+|-
+| bankRequisite || bank_rekv || Банковские реквизиты
+|}
+
+== Плеер ==
+
+'''Тип плеера'''
+{| class="wikitable"
+|-
+! PLAYER_TYPE !! DataCnv !! Описание
+|-
+|course || TrainigCourse || Курс
+|-
+|test || OnlineTest || Тест
+|}
+
+=== Получение структуры курса ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/PLAYER_TYPE/script/data/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+Content-Type: application/xml
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+XML data
+</syntaxhighlight>
+
+=== Результаты ===
+
+==== Запись или обновление результатов ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+PUT /v1/os/PLAYER_TYPE/script/result/:ID
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "results": "base64XML",
+  "draft": true
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+
+==== Получение результатов ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/PLAYER_TYPE/script/result/:ID
+</syntaxhighlight>
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "results": "base64XML",
+  "draft": true
+}
+</syntaxhighlight>
+
+Если результаты теста еще не были сохранены, то возвращается '''HTTP 204 No Content'''
+
+== Состояние тестов ==
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/tests/count?provider=HTLine
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "open": 93,
+  "done": 3981
+}
+</syntaxhighlight>
+
+{| class="wikitable"
+|-
+! Список доступных провайдеров (provider)
+|-
+| SHL
+|-
+| SHL_V2
+|-
+| SHL_RU
+|-
+| UPlatforma
+|-
+| HTLine
+|}
+
+== Счетчики от провайдеров == 
+
+=== Состояние онлайн тестов ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/test/provider/online/count
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "inwork": 93,
+  "rejected": 3,
+  "unread": 81,
+  "cancelled": 1,
+  "closed": 1
+}
+</syntaxhighlight>
+
+=== Состояние онлайн курсов ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/test/provider/training/count
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "inwork": 93,
+  "rejected": 3,
+  "unread": 81,
+  "cancelled": 1,
+  "closed": 1
+}
+</syntaxhighlight>
+
+== Лента новостей ==
+
+=== Бриф список новостей ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/news?dateFrom=20021102&dateTo20150203
+</syntaxhighlight>
+
+Параметры '''dateFrom''' и '''dateTo''' необязательны - тогда возвращается вся лента.
+
+Сортировка (GET параметр):
+{|  class="wikitable" 
+! ''Название'' 
+! ''Описание'' 
+|-
+| firstField
+| первое поле
+|-
+| firstOrder
+| порядок inc или dec
+|-
+| secondField
+| второе поле
+|-
+| secondOrder
+| порядок inc или dec
+|-
+| thirdField
+| третье поле
+|-
+| thirdOrder
+| порядок inc или dec
+|}
+
+Поля для сортировки:
+
+{|  class="wikitable" 
+! ''Название'' 
+! ''Описание'' 
+|-
+| status
+| Статус
+|-
+| responsibleName
+| Ответственный
+|-
+| senderName
+| Отправитель
+|-
+| date
+| Дата
+|-
+| recvdate
+| Дата получения
+|-
+| peopleName
+| Имя человека
+|-
+| projectName
+| Название проекта
+|-
+| companyName
+| Название компании
+|-
+| position
+| Название позиции
+|-
+| townName
+| Город
+|-
+| msgcode
+| Код сообщения
+|}
+
+Флаги пагинации (GET параметр):
+{|  class="wikitable" 
+! ''Название фильтра'' 
+! ''Значение'' 
+|-
+| line
+| текущая позиция
+|-
+| linesPerPage
+| кол-во строк на странице
+|}
+
+Данные по пагинации приходящие в ответе:
+{|  class="wikitable" 
+! ''Название фильтра'' 
+! ''Значение'' 
+|-
+| line
+| текущая позиция
+|-
+| linesPerPage
+| кол-во строк на странице
+|-
+| linesTotal
+| кол-во строк всего
+|-
+| linesLeft
+| строк осталось
+|}
+
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "linesTotal": 259,
+  "line": 260,
+  "linesPerPage": 261,
+  "linesLeft": 262,
+  "news": [
+    {
+      "id": 263,
+      "state": 264,
+      "date": "20170531",
+      "time": "1441",
+      "document": {
+        "attachedDocument": false,
+        "count": 265
+      },
+      "body": {
+        "title": "Новость ЛКК",
+        "comment": "HTML body"
+      }
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Получение новости по ключу ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/news/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "id": 256,
+  "state": 2,
+  "date": "20170531",
+  "time": "1441",
+  "document": {
+    "attachedDocument": true,
+    "count": 2
+  },
+  "body": {
+    "title": "Новость ЛКК",
+    "comment": "HTML body"
+  },
+  "main": {
+    "fileType": "html",
+    "body": "base64 text"
+  },
+  "documents": [
+    {
+      "id": 8,
+      "place": 3,
+      "name": "test.docx",
+      "fileType": "docx"
+    }
+  ]
+}
+</syntaxhighlight>
+
+== Многостраничные документы ==
+
+=== Прикрепление документов ===
+
+'''/params/id''' - ключ страницы
+
+'''/params/collection''' - ключ многостраничного документа (именно его нужно потом сохранять в соответствующее поле анкеты и соответственно оттуда брать). Если это первое сохранение и в анкете ключ контейнера не указан, то в запросе передавать '''/params/collection''' = 0
+В запросе передается актуальный состав страниц. Если страница была удалена, ее в списке не будет (сервер сам ее удалит). 
+Если страница была и неизменно остается, передать ее ключ И НАЗВАНИЕ (остальные поля пустые). Если страница добавляется, 
+то '''/collection/id''' = 0, остальные поля ВСЕ заполнены.
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/os/link/collection
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "gpd": false,
+  "params": {
+    "id": 2, // ключ анкеты
+    "collection": 5,
+    "collectionType": "passport"
+  },
+  "collection": [
+    {
+      "id": 8, // ключ страницы
+      "name": "Tulips.jpg",
+      "date": "20170203",
+      "body": "base64 file body",
+      "fileExt": "jpeg"
+    }
+  ]
+}
+</syntaxhighlight>
+
+Параметр '''collectionType''' указывает тип многостраничного документа:
+
+{| class="wikitable"
+|-
+! Тип документа !! Название
+|-
+| kadryppldoc || Кадровый документ
+|-
+| passport || Скан пасспорта
+|-
+| inn || Скан ИНН
+|-
+| snils || Скан СНИЛС
+|-
+| diploma || Скан диплома
+|-
+| family_cert || Скан семейного положения
+|-
+| militaryid || Скан военного билета
+|-
+| privil_cert || Скан сертификата о льготе
+|-
+| emplhistory || Скан трудовой книжки
+|-
+| bank_rekv || Скан банковских реквизитов
+|}
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "id": 2,
+  "collection": 5
+}
+</syntaxhighlight>
+
+=== Получение одной страницы ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/link/collection/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "id": 4,
+  "name": "111BPA_ANCOR_ДЛЯ КОЛЛЕГ.pdf",
+  "date": "20120403",
+  "fileExt": "pdf",
+  "body": "base64 document body"
+}
+</syntaxhighlight>
+
+== Просмотр документа для БОСС ==
+
+=== Получение страницы просмотра ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/document/navigation
+</syntaxhighlight>
+
+Требуемые GET параметры: 
+
+{| class="wikitable"
+|-
+! GET параметр !! Назначение
+|-
+| key || Ключ авторизации
+|-
+| id || Идентификатор документа
+|-
+| place || Место хранилища документа
+|}
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+HTML document view page
+</syntaxhighlight>
+
+=== Получение базовой информации о документе === 
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/document/internal/mpd/count
+</syntaxhighlight>
+
+Требуемые GET параметры: 
+
+{| class="wikitable"
+|-
+! GET параметр !! Назначение
+|-
+| key || Ключ авторизации
+|-
+| id || Идентификатор документа
+|-
+| place || Место хранилища документа
+|}
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "pages": 9,
+  "name": "Скан паспорта"
+}
+</syntaxhighlight>
+
+=== Получение страницы из документа === 
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/os/document/navigation/internal/mpd/page
+</syntaxhighlight>
+
+Требуемые GET параметры: 
+
+{| class="wikitable"
+|-
+! GET параметр !! Назначение
+|-
+| key || Ключ авторизации
+|-
+| id || Идентификатор документа
+|-
+| place || Место хранилища документа
+|-
+| page || Номер страницы
+|}
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+Raw page data
+</syntaxhighlight>
+
+
+<span id="BackToTop"></span>
+<div class="noprint" style="background-color:#FAFAFA; position:fixed; bottom:2%; left:0.25%; padding:0; margin:0;">
+[[File:Uparrow.png||link=#top]]
+</div>

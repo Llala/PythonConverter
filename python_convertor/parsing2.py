@@ -1,0 +1,50 @@
+# -*- coding: utf-8 -*-
+f = open('in_data', 'r+')
+print f
+#for line in f:
+#    print line
+aString = f.read()
+print aString
+list = aString.split('{',1)
+print list
+bString = list[1]
+print "----------------------------------------------------------------------------------------------------------------"
+print bString
+hList = [] #лист заголовков
+if bString.find('class="wikitable"')!= -1:
+    #обработка заголовка таблицы
+    pos = bString.find('!')
+    print bString[pos:]
+    cString = bString[pos+1:]
+    print cString
+    pos2 = cString.find('!!')
+    hList.append(cString[:pos2].strip())
+    while pos2!=-1:
+        cString = cString[pos2+2:]
+        print "--------------------Changed------------------------------------------------------------------------------------"
+        print cString
+        pos2 = cString.find('!!')
+        if pos2 == -1:
+            pos2 = cString.find('|-')
+            pos3 = pos2
+        print "pos2 =", pos2
+        print cString[:pos2]
+        hList.append(cString[:pos2].strip())
+        pos2 = cString.find('!!')
+        print pos2
+        print hList
+    print "--------------------After header------------------------------------------------------------------------------------"
+    cString = cString[pos3+2:]
+    print cString
+    #обработка тела таблицы
+    pos = bString.find('|')
+    print bString[pos:]
+    cString = bString[pos+1:]
+    print cString
+    pos2 = cString.find('||')
+    print "--------------------Printing by line------------------------------------------------------------------------------------"
+    line = cString.readline()
+    while line:
+        print line
+else:
+    print "Wrong data type"

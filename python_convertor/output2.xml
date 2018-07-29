@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<table>
+  <tbody>
+    <tr>
+      <th>TYPE</th>
+      <th>DataCnv</th>
+      <th>Назначение</th>
+    </tr>
+    <tr>
+      <td>vacation</td>
+      <td>1</td>
+      <td>Заявление на отпус</td>
+    </tr>
+    <tr>
+      <td>dismissal</td>
+      <td>2</td>
+      <td>Заявление на увольнени</td>
+    </tr>
+    <tr>
+      <td>lastname-change</td>
+      <td>3</td>
+      <td>Заявление на изменение фамили</td>
+    </tr>
+    <tr>
+      <td>prepayment-report</td>
+      <td>4</td>
+      <td>Авансовый отче</td>
+    </tr>
+    <tr>
+      <td>business-trip-report</td>
+      <td>5</td>
+      <td>Отчет о командировк</td>
+    </tr>
+    <tr>
+      <td>education-vacation</td>
+      <td>6</td>
+      <td>Заявление на учебный отпуск&lt;ref&gt;http://help.heliosoft.ru/issues/54178&lt;/ref</td>
+    </tr>
+    <tr>
+      <td>vacation-without-pay</td>
+      <td>7</td>
+      <td>Отпуск без сохранения зар.плат</td>
+    </tr>
+    <tr>
+      <td>prepayment-report-rules</td>
+      <td>8</td>
+      <td>Правила заполнения Авансового Отчёт</td>
+    </tr>
+  </tbody>
+</table>

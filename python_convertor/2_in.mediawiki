@@ -1,0 +1,798 @@
+
+== События ==
+
+{| class="wikitable"
+|-
+! Тип !! Назначение
+|-
+| Client || Интервью у клиента, у линейного менеджера, у заказчика
+|-
+| PhoneContact || Телефонный контакт
+|-
+| EmplInterview  || Интервью с сотрудником
+|}
+
+=== Тип события из строки в код ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/dictionary/event2code
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "id": 3073,
+    "name": "Client"
+  },
+  {
+    "id": 1066,
+    "name": "PhoneContact"
+  },
+  {
+    "id": 1025,
+    "name": "EmplInterview"
+  }
+]
+</syntaxhighlight>
+
+=== Тип события из строки в xml  ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/dictionary/event2xml
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "id": "PplZakInterv",
+    "name": "Client"
+  },
+  {
+    "id": "PplPhoneInterv",
+    "name": "PhoneContact"
+  },
+  {
+    "id": "PplInterv",
+    "name": "EmplInterview"
+  }
+]
+</syntaxhighlight>
+
+=== Получение события ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/event/:ID
+</syntaxhighlight>
+
+Параметры редактирования в блоке '''result'''
+{| class="wikitable"
+|-
+! Параметр !! Назначение
+|-
+| minSymbols || Ограничение на минимальное количество символов при вводе результата
+|-
+| freeFormResult || Событие с результатом в виде формы свободного ввода
+|-
+| formResult || Событие с результатом в виде формы
+|-
+| resultFromDisk || Событие с результатом с диска
+|-
+| eventWithScript || Событие со скриптом
+|-
+| shortResult || Видимость кнопки "Сохранить без формы/документа"
+|-
+| shortResultBlock || Наличие у события (при внесении результата) блока краткого результата
+|-
+| shortResults[] || Список кратких результатов (если пользователь выбрал, что событие состоялось)
+|-
+| abortedResultReasons[] || Список причин почему событие не состоялось (если пользователь выбрал, что событие не состоялось)
+|}
+
+Параметры редактирования в блоке '''shortResult'''
+{| class="wikitable"
+|-
+! Параметр !! Назначение
+|-
+| tookPlace || Состоялось ли событие или нет
+|-
+| evaluatedScore || Описание оценки человека
+|-
+| result || Краткий результат/причина почему событие не состоялось
+|-
+| comment || комментарий
+|-
+| percent || Процент соответствия профилю вакансии
+|}
+
+Параметры редактирования в блоке '''edit'''
+{| class="wikitable"
+|-
+! Параметр !! Назначение
+|-
+| editable || Может ли сотрудник редактировать данное событие
+|-
+| closeable || Может ли сотрудник вносить результат по данному событию
+|-
+| changedCount || Сколько раз уже меняли дату события
+|-
+| allowedChangeCount || Сколько раз можно менять дату у данного типа событий (если 0, настройка не задана и проверять ее не надо)
+|-
+| allowedDaysDelta || Насколько дней максимум можно перенести дату данного типа событий (если 0, настройка не задана и проверять ее не надо).
+|}
+
+Ответ:
+
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "id": 77,
+  "type": "eventType",
+  "projectType": 8,
+  "details": {
+    "name": "Резюме",
+    "eventDate": "YYYYMMDD",
+    "eventTime": {
+      "from": "HHMM",
+      "to": "HHMM"
+    },
+    "alarmTime": "HHMM",
+    "comment": "Some event description",
+    "contact": [
+      {
+        "type": "People",
+        "id": 11,
+        "text": "Дивненко И.П."
+      }
+    ],
+    "company": [
+      {
+        "type": "Company",
+        "id": 1,
+        "text": "The Pathna Ltd"
+      }
+    ],
+    "responsible": [
+      {
+        "type": "People",
+        "id": 11,
+        "text": "Дивненко И.П."
+      }
+    ],
+    "schedule": [
+      {
+        "type": "People",
+        "id": 11,
+        "text": "Дивненко И.П."
+      }
+    ],
+    "people": [
+      {
+        "type": "People",
+        "id": 13,
+        "text": "Петров В.В."
+      }
+    ],
+    "project": [
+      {
+        "type": "Project",
+        "id": 331,
+        "text": "Программист Ада"
+      }
+    ]
+  },
+  "documents": [
+    {
+      "fileType": "txt",
+      "id": 78,
+      "name": "Интервью (рекрутер)",
+      "place": 11,
+      "docType": 91,
+      "creator": [
+        {
+          "type": "People",
+          "id": 11,
+          "text": "Дивненко И.П."
+        }
+      ]
+    }
+  ],
+  "result": {
+    "minSymbols": 128,
+    "freeFormResult": true,
+    "formResult": false,
+    "resultFromDisk": true,
+    "eventWithScript": false,
+    "shortResult": false,
+    "shortResultBlock": true,
+    "shortResults": [
+      {
+        "id": 36,
+        "text": "Для принятия решения информации не достаточно"
+      }
+    ],
+    "abortedResultReasons": [
+      {
+        "id": 7,
+        "text": "Другое"
+      }
+    ]
+  },
+  "shortResult": {
+    "tookPlace": true,
+    "evaluatedScore": "50/50",
+    "result": "Полностью соответствует требованиям",
+    "comment": "Частично соответствует требованиям",
+    "percent": 71.25
+  },
+  "edit": {
+    "editable": true,
+    "closeable": false,
+    "changedCount": 2,
+    "allowedChangeCount": 5,
+    "allowedDaysDelta": 30
+  }
+}
+</syntaxhighlight>
+
+=== Создание события ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/event
+</syntaxhighlight>
+
+Поле '''evaluatedScore''' может принимать следующие значения:
+
+{| class="wikitable"
+|-
+! Значение !! Назначение
+|-
+| good || Палец вверх
+|-
+| neutral || Нейтральная оценка
+|-
+| bad|| Палец вниз
+|}
+
+<syntaxhighlight line lang="javascript">
+{
+  "type": 1066,
+  "employee": 1,
+  "person": 3,
+  "contact": 3,
+  "organization": 1,
+  "project": 1,
+  "description": "Some event description",
+  "dateTo": "YYYYMMDD",
+  "time": {
+    "from": "HHMM",
+    "to": "HHMM"
+  },
+  "result": {
+    "type": "eventType",
+    "fileType": "txt",
+    "body": "PHhtbD50ZXN0PC94bWw+"
+  },
+  "shortResult": true,
+  "shortResultBlock": {
+    "tookPlace": true,
+    "evaluatedScore": "bad",
+    "resultCode": 2,
+    "result": "Полностью соответствует требованиям",
+    "percent": 45.5,
+    "comment": "Частично соответствует требованиям"
+  }
+}
+</syntaxhighlight>
+
+Есть несколько видов result:<br/>
+С xmlbody. Весь закодированный в base64 XML будет расскодирован на стороне ESS и добавлен напрямую внутрь тэга metadata
+<syntaxhighlight line lang="javascript">
+{
+  "result": {
+    "type": "eventType",
+    "xmlbody": "base64xml"
+  }
+}
+</syntaxhighlight>
+Скрипт.
+<syntaxhighlight line lang="javascript">
+{
+  "result": {
+    "type": "eventType",
+    "script": "base64",
+    "id": 1
+  }
+}
+</syntaxhighlight>
+
+'''Ограничения'''
+{| class="wikitable"
+|-
+! field !! nullable !! max-length
+|-
+| type || no || no
+|-
+| employee || no || no
+|-
+| person || no || no
+|-
+| contact || no || no
+|-
+| organization || no || no
+|-
+| project || no || no
+|-
+| description || no || no
+|-
+| dateTo || no || no
+|-
+| time/from || no || no
+|-
+| time/to || no || no
+|-
+| result/body/fileType || no || no
+|}
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/v2/event/:ID
+</syntaxhighlight>
+
+При передачи поле '''type''' должно быть одним из '''eventType'''(см. запросы выше), а содержимое формы передаваться через поле '''xmlbody'''. В случае передачи обычного текста нужно использовать поле '''body'''.
+
+Для типа '''Client''' поле '''body''' должно содержать base64 закодированный XML:
+
+<syntaxhighlight lang="xml">
+<MainData>
+    <CANDNAME>Гаденов Дмитрий Александрович</CANDNAME>
+    <ZAKNAME>Парфенов Николай</ZAKNAME>
+    <POSNAME>Продавец</POSNAME>
+    <ZAKINFO>информация от заказчика</ZAKINFO>
+    <CANDINFO>информация от кандидата</CANDINFO>
+    <INTDATE>20150603</INTDATE>
+</MainData>
+</syntaxhighlight>
+
+Для типа '''PhoneContact''' поле '''body''' должно содержать base64 закодированный XML:
+
+<syntaxhighlight lang="xml">
+<PhoneIntervMain>
+    <JobExperience>опыт</JobExperience>
+    <ForeignLanguage>вл ин языком</ForeignLanguage>
+    <DrivingLicense>вод права</DrivingLicense>
+    <Education>образование</Education>
+    <PCSkills>владение компом</PCSkills>
+    <WhatJobIsInterested>что рассматривает</WhatJobIsInterested>
+    <JobSearchHistory>история поиска работы</JobSearchHistory>
+    <SalaryExpectations>зп ожидания</SalaryExpectations>
+    <LocationRequirements>территориальный фактор</LocationRequirements>
+    <AdditionalInformation>доп инфа</AdditionalInformation>
+    <PersonalImpressions>личные впечатления</PersonalImpressions>
+    <ConverationOutcome>выводы</ConverationOutcome>
+    <CANDKEY>14</CANDKEY>
+    <REKRKEY>11</REKRKEY>
+    <INTDATE>20150603</INTDATE>
+    <REKR>Власова Светлана Сергеевна</REKR>
+    <CAND>Гаденов Дмитрий Александрович</CAND>
+</PhoneIntervMain>
+</syntaxhighlight>
+
+Для типа '''EmplInterview''' поле '''body''' должно содержать base64 закодированный XML:
+
+<syntaxhighlight lang="xml">
+<IntervMain>
+    <SotrName>Главный Администратор</SotrName>
+    <Candidate>Гаденов Дмитрий Александрович</Candidate>
+    <PersonalAppearance>внешний вид</PersonalAppearance>
+    <PersonalQualities>личные качества</PersonalQualities>
+    <ProfessionalMotivation>проф мотивация</ProfessionalMotivation>
+    <ProfessionalExperience>проф опыт, личн качества</ProfessionalExperience>
+    <CandKey>14</CandKey>
+    <SotrKey>1</SotrKey>
+    <IntDate>20150603</IntDate>
+    <LanguageSkills>владение ин языком</LanguageSkills>
+    <DifFromCV>отличие резюме от реального опыта, пропуски в карьере</DifFromCV>
+    <WantSalary>зп, пакет и ожидания</WantSalary>
+    <JobSearchHistory>история поиска работы</JobSearchHistory>
+    <WherePresent>куда буду представлять</WherePresent>
+    <WhereEfficient>позиция, где мб эффективен</WhereEfficient>
+    <DopInfo>доп комм</DopInfo>
+    <AlsoParticipated>так же участвовали</AlsoParticipated>
+</IntervMain>
+</syntaxhighlight>
+
+=== Изменение события ===
+
+Запрос (можно менять любое из перечисленных полей):
+<syntaxhighlight lang="html5">
+PUT /v2/event/:ID
+</syntaxhighlight>
+
+==== Форма ====
+<syntaxhighlight line lang="javascript">
+{
+  "dateTo": "20150604",
+  "time": {
+    "from": "1520",
+    "to": "2210"
+  },
+  "result": {
+    "xmlbody": "base64enc",
+    "type": "PplPhoneInterv"
+  }
+}
+</syntaxhighlight>
+==== Произвольный документ ====
+<syntaxhighlight line lang="javascript">
+{
+  "dateTo": "20150604",
+  "time": {
+    "from": "1520",
+    "to": "2210"
+  },
+  "result": {
+    "body": "base64",
+    "type": "PplPhoneInterv",
+    "fileType": "txt"
+  }
+}
+</syntaxhighlight>
+
+==== Скрипт ====
+<syntaxhighlight line lang="javascript">
+{
+  "dateTo": "20150604",
+  "time": {
+    "from": "1520",
+    "to": "2210"
+  },
+  "result": {
+    "body": "base64xml",
+    "id": 12
+  }
+}
+</syntaxhighlight>
+
+'''Ограничения'''
+{| class="wikitable"
+|-
+! field !! nullable !! max-length
+|-
+| dateTo || '''no''' || no
+|-
+| time/from || yes || no
+|-
+| time/to || yes || no
+|-
+| result/body || yes || no
+|-
+| result/xmlbody || yes || no
+|-
+| result/type || yes || no
+|-
+| result/fileType || '''no''' || no
+|}
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+Документы пересылаются точно также, как и при создании события. Если нужно только добавить результат (документ) события, то необходимо пересылать неизмененные дату и время.
+
+=== Получение скрипта ===
+Получение скрипта для внесения результатов по событию.
+
+<syntaxhighlight lang="html5">
+GET /v2/event/script/:ID
+</syntaxhighlight>
+ID - id события
+<br />
+Ответ:
+<syntaxhighlight line lang="javascript">
+{
+  "id": 51,
+  "preview": {
+    "type": 1,
+    "subtype": 2,
+    "body": "base64"
+  },
+  "script": [
+    {
+      "type": 1,
+      "subtype": 2,
+      "body": "base64"
+    }
+  ]
+}
+</syntaxhighlight>
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+== Календарь ==
+
+
+=== Получение данных календаря ===
+
+<syntaxhighlight lang="html5">
+GET /v2/calendar?datefrom=20170918&dateto=20170922&needmeet=true&needtask=false
+GET /v2/calendar/612?datefrom=20170918&dateto=20170922&needmeet=true&needtask=false
+</syntaxhighlight>
+
+{| class="wikitable"
+|-
+! Параметр !! Назначение
+|-
+| datefrom|| Период, за который будут выгружены данные
+|-
+| dateto|| Период, за который будут выгружены данные
+|-
+| needmeet || Будут выгружены События и Системные события (создаются из объектов)
+|-
+| needtask || Будут выгружены Задачи
+|}
+
+Ответ:
+<syntaxhighlight line lang="javascript">
+{
+  "events": [
+    {
+      "peopleId": 554091,
+      "date": "20170921",
+      "meetList": [
+        {
+          "type": "Event",
+          "id": 12967089,
+          "text": "Проверка рекомендаций",
+          "done": false,
+          "filter": {
+            "sotrmeet": false,
+            "private": false,
+            "telcnt": true,
+            "meetings": false,
+            "planer": true
+          },
+          "responsible": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "withWhom": [
+            {
+              "id": 585316,
+              "type": "People",
+              "text": "Лиховид Л.А."
+            },
+            {
+              "id": 679205,
+              "type": "People",
+              "text": "Любимов С.А."
+            },
+            {
+              "id": 679215,
+              "type": "People",
+              "text": "Ногтиков А.А."
+            },
+            {
+              "id": 679216,
+              "type": "People",
+              "text": "Наумов П.И."
+            }
+          ],
+          "planedsotr": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "project": [
+            {
+              "id": 52372,
+              "type": "Project",
+              "text": "10-ГПЗ (15/11/2013 дворник)"
+            }
+          ],
+          "organization": [
+            {
+              "id": 11887,
+              "type": "Company",
+              "text": "10-ГПЗ"
+            }
+          ]
+        },
+        {
+          "type": "Event",
+          "id": 12967093,
+          "text": "Интервью с сотрудником",
+          "done": false,
+          "alarm": 30,
+          "timeFrom": "1400",
+          "timeTo": "1430",
+          "filter": {
+            "sotrmeet": false,
+            "private": false,
+            "telcnt": false,
+            "meetings": true,
+            "planer": true
+          },
+          "responsible": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "withWhom": [
+            {
+              "id": 454125,
+              "type": "People",
+              "text": "Приёмышев А.Л."
+            }
+          ],
+          "planedsotr": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ]
+        },
+        {
+          "type": "Event",
+          "id": 12967086,
+          "text": "Интервью у клиента",
+          "done": false,
+          "timeFrom": "1500",
+          "timeTo": "1600",
+          "filter": {
+            "sotrmeet": false,
+            "private": false,
+            "telcnt": false,
+            "meetings": true,
+            "planer": true
+          },
+          "responsible": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "withWhom": [
+            {
+              "id": 139477,
+              "type": "People",
+              "text": "Львов А."
+            },
+            {
+              "id": 139738,
+              "type": "People",
+              "text": "* *."
+            },
+            {
+              "id": 562177,
+              "type": "People",
+              "text": "Епремян А.Г."
+            }
+          ],
+          "planedsotr": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "project": [
+            {
+              "id": 55428,
+              "type": "Project",
+              "text": "4MEDIA GROUP AG (22/01/2015 Массовка)"
+            }
+          ],
+          "organization": [
+            {
+              "id": 12109,
+              "type": "Company",
+              "text": "4MEDIA GROUP AG"
+            }
+          ]
+        },
+        {
+          "type": "SotrMeet",
+          "id": 78246,
+          "text": "Что бы такое замутить?)",
+          "alarm": 30,
+          "timeFrom": "1700",
+          "timeTo": "1800",
+          "filter": {
+            "sotrmeet": true,
+            "private": false,
+            "telcnt": false,
+            "meetings": false,
+            "planer": true
+          },
+          "responsible": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "planedsotr": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "employeeId": 554091,
+  "dateFrom": "20170918",
+  "dateTo": "20170922",
+  "tasks": [
+    {
+      "id": 21338,
+      "type": "SotrTask",
+      "dateFrom": "20170901",
+      "dateTo": "20171101",
+      "done": false,
+      "priority": 2,
+      "description": "Что-то липкое и тягучее тянется и тянется!",
+      "alarm": {
+        "date": "20171018",
+        "time": "1200"
+      }
+    }
+  ]
+}
+</syntaxhighlight>
+
+
+<span id="BackToTop"></span>
+<div class="noprint" style="background-color:#FAFAFA; position:fixed; bottom:2%; left:0.25%; padding:0; margin:0;">
+[[File:Uparrow.png||link=#top]]
+</div>
+
+=== Получение данных о пользователях календаря ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/calendar/users
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight line lang="javascript">
+
+{
+    "id": 12,
+    "surname": "Иванова Анна Дмитриевна"
+  }
+</syntaxhighlight>
+
+
+
+<span id="BackToTop"></span>
+<div class="noprint" style="background-color:#FAFAFA; position:fixed; bottom:2%; left:0.25%; padding:0; margin:0;">
+[[File:Uparrow.png||link=#top]]
+</div>

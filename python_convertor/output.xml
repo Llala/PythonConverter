@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<table>
+  <tbody>
+    <tr>
+      <th>Тип</th>
+      <th>Сервер</th>
+    </tr>
+    <tr>
+      <td>HTTP</td>
+      <td>http://dsouts.experium.ru/SupportSrv/SupportSrv.svc/Suppor</td>
+    </tr>
+    <tr>
+      <td>HTTPS</td>
+      <td>https://dsouts.experium.ru/SupportSrv/SupportSrv.svc/Suppor</td>
+    </tr>
+  </tbody>
+</table>

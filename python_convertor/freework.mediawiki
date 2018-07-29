@@ -1,0 +1,850 @@
+== Компания Freework ==
+=== Получение информации о пользователе по токену ===
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/freework/registration?authKey=KEY
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "name": {
+    "firstName": "Dmitriy",
+    "lastName": "Shelomentsev",
+    "middleName": "Sergeevich"
+  },
+  "token": "KAMAAAMOMOEGHGJL",
+  "email": "user@host.ni",
+  "id": 10,
+  "userType": "PeopleFreeWork",
+  "registered": "No"
+}
+</syntaxhighlight>
+=== Регистрация пользователя ===
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/freework/registration
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+    authKey:"KEY",
+    email:"user@host.ni",
+    password:"123"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 OK
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "name": {
+    "firstName": "Dmitriy",
+    "lastName": "Shelomentsev",
+    "middleName": "Sergeevich"
+  },
+  "token": "KAMAAAMOMOEGHGJL",
+  "email": "user@host.ni",
+  "id": 10,
+  "userType": "PeopleFreeWork",
+  "registered": "No"
+}
+</syntaxhighlight>
+=== Регистрация пользователя ===
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/freework/registration
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+    authKey:"KEY",
+    email:"user@host.ni",
+    password:"123"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 OK
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "name": {
+    "firstName": "Dmitriy",
+    "lastName": "Shelomentsev",
+    "middleName": "Sergeevich"
+  },
+  "token": "KAMAAAMOMOEGHGJL",
+  "email": "user@host.ni",
+  "id": 10,
+  "userType": "PeopleFreeWork",
+  "registered": "No"
+}
+</syntaxhighlight>
+== Получение ключа для сброса пароля ==
+
+Ключ приходит внутри письма и используется в запросе как обычный токен для регистрации пользователя. 
+
+=== Получение ключа для Freeworker ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/freework/freeworker/password-reset
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "email": "noname@nohost.de",
+  "url-with-token": "www.example.com/"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+=== Получение ключа для клиента ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/freework/client/password-reset
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "email": "noname@nohost.de",
+  "url-with-token": "www.example.com/"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+== Запросы для зарегистрированного пользователя ==
+=== Заголовки ===
+Все запросы далее содержат обязательный заголовок X-ESS-FW-AUTH-TYPE, который нужен для выбора типа пользователя.
+
+Авторизация как FreeWorker:
+<syntaxhighlight lang="html5">
+X-ESS-FW-AUTH-TYPE: AsFreeWorker
+</syntaxhighlight>
+
+Авторизация как клиент:
+<syntaxhighlight lang="html5">
+X-ESS-FW-AUTH-TYPE: AsClient
+</syntaxhighlight>
+
+Заголовок Authorization нужен для передачи токена серверу:
+<syntaxhighlight lang="html5">
+Authorization: TOKEN
+</syntaxhighlight>
+
+=== Авторизация пользователя и получение токена ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/freework/login
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+    email:"user@host.ni",
+    password:"123"
+}
+</syntaxhighlight>
+
+Ответ для FreeWorker'а:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "firstName": "Дмитрий",
+  "lastName": "Тополев",
+  "middleName": "Сергеевич",
+  "token": "TOKEN",
+  "foto": {
+    "type": "jpeg",
+    "body": "base64"
+  }
+}
+</syntaxhighlight>
+
+Ответ для клиента:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "firstName": "Дмитрий",
+  "middleName": "Сергеевич",
+  "lastName": "Тополев",
+  "token": "TOKEN",
+  "foto": {
+    "type": "jpeg",
+    "body": "base64"
+  }
+}
+</syntaxhighlight>
+
+=== Получение информации о текущем пользователе ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/freework/user/current
+</syntaxhighlight>
+
+Ответ для FreeWorker'а:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "firstName": "Дмитрий",
+  "lastName": "Шеломенцев",
+  "middleName": "Сергеевич",
+  "token": "TOKEN",
+  "foto": {
+    "type": "jpeg",
+    "body": "base64"
+  },
+  "metro": "Павелецкая",
+  "birth": "YYYYMMDD",
+  "email": "user@host.ni",
+  "phone": "123456789",
+  "town": 3,
+  "citizenship": 2,
+  "education": 51,
+  "englishLevel": 2
+}
+</syntaxhighlight>
+
+Ответ для клиента:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "firstName": "Дмитрий",
+  "middleName": "Сергеевич",
+  "lastName": "Шеломенцев",
+  "token": "TOKEN",
+  "foto": {
+    "type": "jpeg",
+    "body": "base64"
+  },
+  "company": "CompanyName",
+  "staff": {
+    "name": "Федор",
+    "foto": {
+      "type": "jpeg",
+      "body": "BASE64"
+    },
+    "email": "experium@mail.ru (раб) ",
+    "phone": "(999) 123-4567 (конт) "
+  },
+  "phone": "123456789",
+  "email": "user@host.ni"
+}
+</syntaxhighlight>
+
+=== Список проектов ===
+Для запроса требуется дополнительный заголовок X-ESS-FW-FORM-TYPE. Он принимает следующие значения:
+Завершённые проекты
+<syntaxhighlight lang="html5">
+X-ESS-FW-FORM-TYPE: PastProjects
+</syntaxhighlight>
+Текущие проекты
+<syntaxhighlight lang="html5">
+X-ESS-FW-FORM-TYPE: CurrentProjects
+</syntaxhighlight>
+Будущие проекты
+<syntaxhighlight lang="html5">
+X-ESS-FW-FORM-TYPE: FutureProjects
+</syntaxhighlight>
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/freework/user/projects?daysbefore="NUM"
+</syntaxhighlight>
+выдаются проекты, в которых FreeWorker работал позднее numdaysbefore перед сегодняшним днем
+нужен только для FreeWorker'a с FORM-TYPE: FutureProjects, в остальных случаях он игнорируется.
+
+Ответ для FreeWorker'a:
+<syntaxhighlight lang="javascript">
+{
+  "projects": [
+    {
+      "id": 6,
+      "position":"Должность",
+      "dateFrom": "20150727",
+      "dateTo": "20150728",
+      "name": "Промоутер чай Бодрость",
+      "comment": "Надо будет приставать к прохожим и предлагать образцы продукции",
+      "client": "Danone"
+    },
+    {
+      "id": 7,
+     "position":"Должность",
+      "dateFrom": "20150729",
+      "dateTo": "20150730",
+      "name": "Промышленный альпинизм",
+      "comment": "Помыть окна в небоскрёбе",
+      "client": "Danone"
+    }
+  ]
+}
+</syntaxhighlight>
+
+Ответ для Client'a:
+<syntaxhighlight lang="javascript">
+{
+  "projects": [
+    {
+      "id": 7,
+      "dateFrom": "20150501",
+      "dateTo": "20150826",
+      "name": "Перетаскивание шкафов",
+      "comment": "experium@mail.ru",
+      "workersNumber": 20
+    },
+    {
+      "id": 6,
+      "dateFrom": "20150501",
+      "dateTo": "20150819",
+      "name": "Промоутер чай Бодрость",
+      "comment": "Работники будут промотировать чай Бодрость",
+      "workersNumber": 5
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Информация о проекте ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v1/freework/user/project?id=ID
+</syntaxhighlight>
+
+id - идентификатор проекта
+
+Ответ для FreeWorker'a:
+<syntaxhighlight lang="javascript">
+{
+  "addressComment": "Пешком от метро Курская",
+  "id": 6,
+  "dateFrom": "20150727",
+  "dateTo": "20150728",
+  "address": "Россия, 14556, Москва г, Москва, Курская, Казакова, дом 10",
+  "addressEmployee": "ул. Адрес для FreeWorker'a ",
+  "name": "Промоутер чай Бодрость",
+  "company": "Danone",
+  "legalEntity": "Юр.лицо",
+  "rates": "rate1, rate2", //Ставки
+  "calendar": [
+    {
+      "date": "20150727",
+      "timeFrom": "1000",
+      "timeTo": "1800",
+      "breaktime": "30"
+    },
+    {
+      "date": "20150728",
+      "timeFrom": "1000",
+      "timeTo": "1800",
+      "breaktime": "30"
+    }
+  ],
+  "client": {
+    "name": "Васильева Екатерина Матвеевна",
+    "email": "vasilyeva@gmail.com (конт) ",
+    "phone": "(499) 345-1212 (конт) "
+  },
+  "staff": {
+    "name": "Федор",
+    "foto": {
+      "type": "jpeg",
+      "body": "BASE64"
+    },
+    "email": "experium@mail.ru (раб) ",
+    "phone": "(999) 123-4567 (конт) "
+  },
+  "description": "Надо будет приставать к прохожим и предлагать образцы продукции",
+  "workerAppearance": "Опрятно, рубашка/джинсы"
+}
+</syntaxhighlight>
+
+Ответ для Client'a:
+<syntaxhighlight lang="javascript">
+{
+  "addressComment": "Пешком от метро Курская",
+  "id": 6,
+  "dateFrom": "20150501",
+  "dateTo": "20150819",
+  "clientCalendar": [
+    {
+      "planedWorkersNumber": 0,
+      "date": "20150501",
+      "realWorkersNumber": 0,
+      "timeFrom": "1000",
+      "timeTo": "1800",
+      "breaktime": "0",
+      "confirmed": 0
+    },
+    {
+      "planedWorkersNumber": 5,
+      "date": "20150727",
+      "realWorkersNumber": 1,
+      "timeFrom": "1000",
+      "timeTo": "1800",
+      "breaktime": "30",
+      "confirmed": 0
+    },
+    {
+      "planedWorkersNumber": 5,
+      "date": "20150728",
+      "realWorkersNumber": 1,
+      "timeFrom": "1000",
+      "timeTo": "1800",
+      "breaktime": "30",
+      "confirmed": 0
+    },
+    {
+      "planedWorkersNumber": 4,
+      "date": "20150812",
+      "realWorkersNumber": 0,
+      "timeFrom": "1200",
+      "timeTo": "2000",
+      "breaktime": "0",
+      "confirmed": 0
+    },
+    {
+      "planedWorkersNumber": 4,
+      "date": "20150819",
+      "realWorkersNumber": 0,
+      "timeFrom": "1200",
+      "timeTo": "2000",
+      "breaktime": "0",
+      "confirmed": 0
+    }
+  ],
+  "address": "Россия, 14556, Москва г, Москва, Курская, Казакова, дом 10",
+  "name": "Промоутер чай Бодрость",
+  "workersNumber": 5,
+  "workerCalendar": [
+    {
+      "date": "20150727",
+      "timeFrom": "1000",
+      "timeTo": "1800",
+      "breaktime": "30",
+      "worker": [
+        {
+          "name": "Смирнов Игорь Владимирович"
+        }
+      ]
+    },
+    {
+      "date": "20150728",
+      "timeFrom": "1000",
+      "timeTo": "1800",
+      "breaktime": "30",
+      "worker": [
+        {
+          "name": "Смирнов Игорь Владимирович"
+        }
+      ]
+    }
+  ],
+  "comment": "Работники будут промотировать чай Бодрость",
+  "shedule": "пн-пт 10-18",
+  "duties": "Обязанности",
+  "requirements": "требования"
+}
+</syntaxhighlight>
+
+=== Календарь ===
+
+Запрос:
+
+<syntaxhighlight lang="html5">
+GET /v1/freework/user/calendar?datefrom=YYYYMMDD&dateto=YYYYMMDD
+</syntaxhighlight>
+
+Ответ для FreeWorker'a:
+<syntaxhighlight lang="javascript">
+{
+  "projects": [
+    {
+      "client": "Danone",
+      "id": 6,
+      "dateFrom": "20150727",
+      "dateTo": "20150728",
+      "position": "Промоутер",
+      "name": "Промоутер чай Бодрость",
+      "workerCalendar": [
+        {
+          "date": "20150727",
+          "timeFrom": "1000",
+          "timeTo": "1800",
+          "breaktime": "30"
+        },
+        {
+          "date": "20150728",
+          "timeFrom": "1000",
+          "timeTo": "1800",
+          "breaktime": "30"
+        }
+      ]
+    }
+  ]
+}
+</syntaxhighlight>
+
+Ответ для Client'a:
+<syntaxhighlight lang="javascript">
+{
+  "projects": [
+    {
+      "id": 7,
+      "dateFrom": "20150501",
+      "workerCalendar": [
+        {
+          "planedWorkersNumber": 5,
+          "date": "20150727",
+          "realWorkersNumber": 0,
+          "timeFrom": "1000",
+          "timeTo": "1800",
+          "breaktime": "30",
+          "confirmed": 0
+        },
+        {
+          "planedWorkersNumber": 5,
+          "date": "20150728",
+          "realWorkersNumber": 0,
+          "timeFrom": "1000",
+          "timeTo": "1800",
+          "breaktime": "30",
+          "confirmed": 0
+        },
+        {
+          "planedWorkersNumber": 5,
+          "date": "20150729",
+          "realWorkersNumber": 0,
+          "timeFrom": "1000",
+          "timeTo": "1800",
+          "breaktime": "30",
+          "confirmed": 0
+        }
+      ],
+      "dateTo": "20150826",
+      "name": "Перетаскивание шкафов"
+    },
+    {
+      "id": 6,
+      "dateFrom": "20150501",
+      "workerCalendar": [
+        {
+          "planedWorkersNumber": 5,
+          "date": "20150727",
+          "realWorkersNumber": 1,
+          "timeFrom": "1000",
+          "timeTo": "1800",
+          "breaktime": "30",
+          "confirmed": 0
+        },
+        {
+          "planedWorkersNumber": 5,
+          "date": "20150728",
+          "realWorkersNumber": 1,
+          "timeFrom": "1000",
+          "timeTo": "1800",
+          "breaktime": "30",
+          "confirmed": 0
+        }
+      ],
+      "dateTo": "20150819",
+      "name": "Промоутер чай Бодрость"
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Клиент ===
+
+==== Создание заявки ====
+Запрос:
+
+<syntaxhighlight lang="html5">
+POST /v1/freework/client/request
+</syntaxhighlight>
+
+Ответ:
+
+<syntaxhighlight lang="javascript">
+{
+  "project":
+  {
+    "name":"Название проекта",
+    "need": "должность",
+    "description":"Описание",
+    "workersNumber":10,
+    "workTime":"10:00-19:00",
+    "dateFrom":"01012015",
+    "dateTo":"01012016",
+    "workDays":"пн., вт.",
+    "price":"40000"
+  },
+  "staff":
+  {
+    "firstName":"Алексей",
+    "middleName":"Семенович",
+    "lastName":"Тересченко",
+    "phone":"+123456789",
+    "email":"host@host.ru",
+  }
+}
+</syntaxhighlight>
+
+==== Список заявок ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/freework/client/requests
+</syntaxhighlight>
+
+Ответ:
+
+<syntaxhighlight lang="javascript">
+[
+{
+  'request':
+  {
+    'id': 2,
+    'name':'Заявка на позицию ()',
+    'status': 'на рассмотрении',
+    'freeworkStuffId': 6,
+    'freeworkStuffName': 'Виктор Сергеевич Фролов',
+    'clientId': 8,
+    'clientName': 'Алексей Сергеевич Тересченко',
+    'companyId': 7,
+    'companyName': 'Danone',
+    'time': '1678',
+    'date': '20160112'
+  },
+  'project':
+  {
+    'name': 'Наименование позиции',
+    'companyId': 8,
+    'dateFrom': '20160203',
+    'price': '30000',
+    'dateTo': '20160203',
+    'workersNumber': 7,
+    'workTime': '5',
+    'need': 'должность',
+    'workDay': 'понедельник',
+    'description': 'Описание'
+  },
+  'staff':
+  {
+    'firstName': 'Имя',
+    'middleName': 'Отчество',
+    'lastName': 'Фамилия',
+    'phone': '+88888888888',
+    'email': 'host@host.ru'
+  }
+},
+{
+  'request':
+  {
+    'id': 2,
+    'name':'Заявка на позицию ()',
+    'status': 'на рассмотрении',
+    'freeworkStuffId': 6,
+    'freeworkStuffName': 'Виктор Сергеевич Фролов',
+    'clientId': 8,
+    'clientName': 'Алексей Сергеевич Тересченко',
+    'companyId': 7,
+    'companyName': 'Danone',
+    'time': '1678',
+    'date': '20160112'
+  },
+  'project':
+  {
+    'name': 'Наименование позиции',
+    'companyId': 8,
+    'dateFrom': '20160203',
+    'price': '30000',
+    'dateTo': '20160203',
+    'workersNumber': 7,
+    'workTime': '5',
+    'need': 'должность',
+    'workDay': 'понедельник',
+    'description': 'Описание'
+  },
+  'staff':
+  {
+    'firstName': 'Имя',
+    'middleName': 'Отчество',
+    'lastName': 'Фамилия',
+    'phone': '+88888888888',
+    'email': 'host@host.ru'
+  }
+}
+]
+</syntaxhighlight>
+== Остальные запросы ==
+=== Создание анкеты соискателя (старый запрос) ===
+
+'''Старый''' запрос:
+<syntaxhighlight lang="html5">
+POST /temp/applicant/request
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "firstName": "Илья",
+  "middleName": "П",  
+  "lastName": "Орлов",
+  "phone": "8919001909",
+  "city": 33,
+  "email": "noname@nohost.com",
+  "birthDate": "25.10.1980",
+  "citizenship": "Россия",
+  "language": 4,
+  "level": "fluent",
+  "education": 2,
+  "description": "Описание, пожелания",
+  "convenientHours": "с 9 до 10",
+  "convenientTown": 5,
+  "metro": "Таганская"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/temp/applicant/1
+</syntaxhighlight>
+
+=== Создание анкеты партнера (старый запрос) ===
+
+'''Старый''' запрос:
+<syntaxhighlight lang="html5">
+POST /temp/partner/request
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "organization": "ООО Рога и копыта",
+  "description": "Описание",
+  "firstName": "Сергей",
+  "middleName": "Петрович",
+  "lastName": "Орлов",
+  "phone": "+79154547100",
+  "email": "noname@nohost.com"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/temp/partner/1
+</syntaxhighlight>
+
+=== Создание анкеты соискателя ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/freework/applicant/request
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+    "personal": {
+        "firstName": "Дмитрий",
+        "middleName": "Сергеевич",
+        "lastName": "Шеломенцев",
+        "city": 470,
+        "phone": "903 161-21-90",
+        "birth": "19890323",
+        "email": "nohost@nohost.ru",
+        "citizenship": 1,
+        "education": 31,
+        "englishLevel": 4,
+        "metro": "Павелецкая"
+    },
+    "attachment": [
+        {
+            "docType": "photo",
+            "fileType": "jpeg",
+            "body": "BASE64ENCODED IMAGE",
+        }
+    ],
+    "wishes": {
+            "work": "Хочу работать промоутером",
+            "temp": "9.00-18.00"
+    }
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/temp/applicant/1
+</syntaxhighlight>
+
+=== Обновление анкеты соискателя ===
+Запрос выполняется с токеном в заголовке Authorization.
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v1/freework/applicant/update
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+    "personal": {
+        "firstName": "Дмитрий",
+        "middleName": "Сергеевич",
+        "lastName": "Шеломенцев",
+        "city": 470,
+        "phone": "903 161-21-90",
+        "birth": "19890323",
+        "email": "nohost@nohost.ru",
+        "citizenship": 1,
+        "education": 31,
+        "englishLevel": 4,
+        "metro": "Павелецкая"
+    },
+    "attachment": [
+        {
+            "docType": "photo",
+            "fileType": "jpeg",
+            "body": "BASE64ENCODED IMAGE",
+        }
+    ],
+    "wishes": {
+            "work": "Хочу работать промоутером",
+            "temp": "9.00-18.00"
+    }
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/temp/applicant/1
+</syntaxhighlight>
+
+'''Примечание'''
+
+Значение поля english берется из раздела [[Experium_RESTful_Web_Service#Фиксированные-списки|Фиксированные списки]]. Коды для полей city, language, education, convenientTown берутся из [[Словари_БД|словарей]]. При выполнении запросов словарей необходимо передавать фиксированный HTTP заголовок, содержащий слово freeworker
+
+<syntaxhighlight lang="html5">
+Authorization: freeworker
+</syntaxhighlight>
+
+<span id="BackToTop"></span>
+<div class="noprint" style="background-color:#FAFAFA; position:fixed; bottom:2%; left:0.25%; padding:0; margin:0;">
+[[File:Uparrow.png||link=#top]]
+</div>
+
+

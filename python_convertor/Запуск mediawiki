@@ -1,0 +1,5 @@
+сайт https://confluence.experium.ru/pages/viewtrash.action?key=INTEG
+... -> page information
+
+sh gen.sh wikis/webinterface.wiki ~/test2
+python3 uploader.py uploader_webinterface.params

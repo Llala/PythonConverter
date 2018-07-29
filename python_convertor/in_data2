@@ -1,0 +1,22 @@
+'''Значение type'''
+{| class="wikitable"
+|-
+! TYPE !! DataCnv !! Назначение
+|-
+| vacation || 1 || Заявление на отпуск
+|-
+| dismissal || 2 || Заявление на увольнение
+|-
+| lastname-change || 3|| Заявление на изменение фамилии
+|-
+| prepayment-report || 4 || Авансовый отчет
+|-
+| business-trip-report || 5 || Отчет о командировке
+|-
+| education-vacation || 6 || Заявление на учебный отпуск<ref>http://help.heliosoft.ru/issues/54178</ref>
+|-
+| vacation-without-pay || 7 || Отпуск без сохранения зар.платы
+|-
+| prepayment-report-rules || 8 || Правила заполнения Авансового Отчёта
+|}
+

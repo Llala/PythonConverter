@@ -1,0 +1,5136 @@
+[[Файл:Experium.jpg|inline|right]]
+
+== Формат данных ==
+
+На данный момент поддерживается формат JSON, поддержка XML не предполагается.
+
+Каждый ответ, имеющий тело, должен включать следующий заголовок:
+
+<syntaxhighlight lang="html5">
+Content-Type: application/json;charset=UTF-8
+</syntaxhighlight>
+
+Все даты в телах запросов и ответов представлены в формате YYYYMMDD,а время - в формате HHMM (используется 24-часовое представление).
+
+== CORS ==
+
+В ответе на каждый запрос должны присутствовать следующие заголовки:
+
+<syntaxhighlight lang="html5">
+Access-Control-Allow-Origin: [domain specific URI part]
+Access-Control-Allow-Methods: OPTIONS, [HTTP VERBS]
+Access-Control-Allow-Headers: Authorization, Content-Type
+</syntaxhighlight>
+
+[HTTP VERBS] - зависят от конкретного запроса. [domain specific URI part] настраивается ИТ службой для приема запросов с определенных обсуживаемых узлов.
+
+== OPTIONS ==
+
+Ответом на любой ''OPTIONS'' запрос должен быть статус ''200''.
+
+Запрос:
+<syntaxhighlight lang="html5">
+OPTIONS /
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+Allow: [HTTP VERBS]
+</syntaxhighlight>
+
+[HTTP VERBS] - зависят от конкретного запроса.
+
+<pre>
+Ветка системы ESS MLV допускает Access-Control-Allow-Origin: * и все выполняемые HTTP VERB,
+ветка ESS WOE и ESS MLV 1.6 и выше запрещают это. Постепенно обе ветки будут работать как WOE.
+</pre>
+
+== Язык в запросах ==
+
+Язык выполняемого запроса задается с помощью заголовка ''Accept-Language''. Если он не указан, то по умолчанию используется русский язык.
+
+В настоящий момент доступны следующие языки:
+
+{|  class="wikitable" 
+! ''Значение'' 
+! ''Язык''
+|-
+| ru-ru
+| русский
+|-
+| en-us
+| английский
+|}
+
+== Аутентификация ==
+=== Общая аутентификация ===
+Позволяет получить список доступных пользователю кабинетов
+Принимает заголовок Web-Catalog, который содержит название компании. Заголовок обязательный только для WebInterface
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/login/common
+Authorization: Basic ZWxudXI6cGFzc3dvcmQ=
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/authentication/0b39e25e7c4007af0b68e2f0adbc07f1
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "token": "TOKEN",
+  "createdAt": "2016-03-07 16:00",
+  "accounts": [
+    {
+      "name": "MinZdravSpecialist"
+    }
+  ]
+}
+</syntaxhighlight>
+
+'''Возможные значения в accounts/name'''
+{| class="wikitable"
+|-
+! ESS !! DataCnv !!Назначение
+|-
+| WebInterface || DoWebSupport || юзер веб-интерфейса
+|-
+| GraduateRecruitment || DoTestPeopleSupport || соискатель GR
+|-
+| OutsourceStaff || DoStaffSupport || сотрудник Outsource
+|-
+| OutsourceClient || DoClientStaffSupport || заказчик Outsource
+|-
+| FreeworkClient || DoClientFreeWorkSupport || заказчик Freework
+|-
+| FreeworkFreeworker || DoFreeWorkerSupport || сотрудник Freework
+|-
+| MinZdravSpecialist || DoDZMEmployeeSupport || соискатель ДЗМ
+|-
+| EmployeeSupport || DoEmployeeSupport || внутренний сотрудник
+|-
+| HRDB || DoHRDBAccess || кабинет Outsource с доступом к базе HR
+|}
+
+=== Аутентификация пользователя ===
+
+Требуется заголовок Web-Catalog, который содержит название компании.
+
+<div style="border: 1px solid; margin: 5px 0px; padding:15px 10px 15px 50px; background-repeat: no-repeat; background-position: 10px center; color: #9F6000; background-color: #FEEFB3; ">
+<div style="display: inline; top: 20px; left: 20px;">[[File:warning.png]]</div> <b>Внимание:</b> Все заголовки, участвующие в запросах, <b>регистрозависимые</b>, кроме стандартных авторизационных
+</div>
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/ext/login
+POST /v2/ext/login/basic (для мобильной версии)
+Authorization: Basic ZWxudXI6cGFzc3dvcmQ=
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "token": "TOKEN",
+  "createdAt": "2016-03-07 16:00",
+  "needUpdatePassword": true,
+  "user": {
+    "id": 1,
+    "login": "nick",
+    "name": "Иван Иванович Иванов",
+    "position": "самый главный",
+    "mayBe": {
+      "responsible": true,
+      "coexecutive": true,
+      "lineManager": true
+    },
+    "town": {
+      "id": 1,
+      "name": "Свердловск"
+    },
+    "organization": {
+      "id": 2,
+      "name": "MakeMoneyCORP"
+    }
+  },
+  "experium": {
+    "user": 0,
+    "organization": 7,
+    "version": "HR"
+  }
+}
+</syntaxhighlight>
+
+=== Получение информации о пользователе ===
+
+Требует заголовок Web-Catalog
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/ext/login/info
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  organization: "MakeMoneyCORP"
+}
+</syntaxhighlight>
+
+=== Смена пароля ===
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/ext/session/password/change
+
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "currentPassword": "god123",
+  "newPassword": "123god"
+}
+</syntaxhighlight>
+'''Ограничения'''
+{| class="wikitable"
+|-
+! field !! nullable !! max-length
+|-
+| currentPassword || no || no
+|-
+| newPassword || no || no
+|}
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+=== Регистрация по ссылке из письма ===
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/set-password
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+{
+  "login": "golubkin@heliosoft.ru",
+  "password": "qwe123"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/v2/set-password/9999
+</syntaxhighlight>
+
+=== Сброс пароля ===
+
+==== Заявка на сброс пароля ====
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/ext/password/reset
+
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  email: "user@host.com",
+  url-with-token: "makemoneycorp.com/password-reset"
+}
+</syntaxhighlight>
+'''Ограничения'''
+{| class="wikitable"
+|-
+! field !! nullable !! max-length
+|-
+| email || no || no
+|-
+| email/url-with-token || no || no
+|}
+Ответ:
+Пользователю будет отправлено письмо со ссылкой на смену пароля
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+==== Информация о токене для сброса пароля ====
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/ext/password/check?authKey=AUTHKEY_FROM_EMAIL
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  organization: "MakeMoneyCORP",
+  firstName: "Ivan",
+  middleName: "Ivanovich",
+  lastName: "Ivanov",
+  email: "user@host.com",
+  login: "ivan",
+  passwordRules: "Описание требований к паролю"
+}
+</syntaxhighlight>
+
+==== Сброс пароля ====
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/ext/password/change
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  password: "mostDifficultPasswordEver",
+  authKey: "AUTHKEY"
+}
+</syntaxhighlight>
+'''Ограничения'''
+{| class="wikitable"
+|-
+! field !! nullable !! max-length
+|-
+| password || no || no
+|-
+| password/authKey || no || no
+|}
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  token: "TOKEN",
+  createdAt: "2016-04-04 17:00"
+}
+</syntaxhighlight>
+
+== Пользователи ==
+
+=== Получение информации о текущем пользователе ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/user/current
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "id": 1,
+  "username": "Василий Вася Васильевич",
+  "login": "vasa",
+  "email": "noname@nohost.lv",
+  "position": "Директор",
+  "companyName": "OOO Neft",
+  "company": 93,
+  "version": "HR",
+  "hr": true,
+  "responsible": true,
+  "coexecutive": true,
+  "approveProjects": true,
+  "approvePeople": true,
+  "staffRequest": false,
+  "time": {
+    "date": "20160318",
+    "bias": "+0300",
+    "time": "1038"
+  },
+  "needUpdatePassword": true,
+  "license": "20170209",
+  "licenseSubType": "ANCOR"
+}
+</syntaxhighlight>
+
+=== Получение информации о текущем пользователе (education) ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/user/current/ext
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "id": 256,
+  "employeeId": 257,
+  "login": "ivan",
+  "email": "divnenko@experium.ru",
+  "version": "divnenko@experium.ru",
+  "username": "String",
+  "license": "20180209",
+  "licenseSubType": "Ancor",
+  "needUpdatePassword": false,
+  "company": 1,
+  "companyName": "Vertu",
+  "department": 259,
+  "departmentName": "The big department",
+  "position": "HRM",
+  "responsible": true,
+  "coexecutive": false,
+  "approveProjects": true,
+  "approvePeople": false,
+  "staffRequest": true,
+  "time": {
+    "bias": "+0300",
+    "date": "20171123",
+    "time": "1546"
+  },
+  "accounts": [
+    {
+      "name": "DoWebSupport"
+    }
+  ],
+  "photo": {
+    "fileType": "png",
+    "body": "base64 image"
+  }
+}
+</syntaxhighlight>
+
+Объект '''time''' содержит дату, время и часовое смещение '''сервера ESS'''.
+
+Возможные значения свойства '''version''':
+{|  class="wikitable" 
+! ''Значение'' 
+! ''Версия''
+|-
+| HR
+| HR-менеджер
+|-
+| KA
+| Кадровое агенство
+|}
+
+Возможные значения свойства '''licenseSubType''':
+{|  class="wikitable" 
+! ''Значение'' 
+! ''Версия''
+|-
+| Ancor
+| Кадровое агенство Ancor
+|-
+| ICM
+| 
+| Группа компаний ICM
+|}
+
+=== Прикрепление фотографии пользователя ===
+
+'''id''' - берётся из запроса текущего пользователя
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/user/current/photo
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "body": "base64",
+  "fileType": "jpeg",
+  "name": "фото_для_теста",
+  "id": 11
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+</syntaxhighlight>
+<syntaxhighlight lang="javascript">
+{
+  "document": 22
+}
+</syntaxhighlight>
+
+=== Получение пользователей с правом быть ответственным за проект ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/user/responsible
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+    {
+        "id": 1,
+        "username": "pupkin",
+        "firstName": "Василий",
+        "lastName": "Пупкин"
+    }
+]
+</syntaxhighlight>
+
+=== Получение пользователей с правом соисполнителя ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/user/coexecutive
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+    {
+        "id": 1,
+        "firstName": "Василий",
+    }
+]
+</syntaxhighlight>
+
+=== Получение списка менеджеров ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/user/managers
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "id": 1144,
+    "name": "Пастухова Надежда"
+  },
+  {
+    "id": 492,
+    "name": "Борисенко Андрей"
+  }
+]
+</syntaxhighlight>
+
+=== Получение списка участников проекта ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/user/participant
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+    {
+        "id": 12,
+        "firstName": "Гоша",
+    }
+]
+</syntaxhighlight>
+
+=== Получение пользователей с правом согласующего ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/user/approval
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+    {
+        "id": 1,
+        "firstName": "Василий",
+    }
+]
+</syntaxhighlight>
+
+== Организации ==
+
+=== Получение списка организаций ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/organization
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+    {
+        "id": 1,
+        "name": "Experium"
+    },
+    {
+        "id": 2,
+        "name": "АНКОР"
+    }
+]
+</syntaxhighlight>
+
+=== Получение конкретной организации ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/organization/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+    "id": 1,
+    "name": "Experium"
+}
+</syntaxhighlight>
+
+=== Получение списка сотрудников организации ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/organization/:ID/employee
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "id": 11,
+    "name": "Divnenko Ivan JTI JUMP",
+    "organizationId": 1,
+    "departmentId": 0
+  },
+  {
+    "id": 12,
+    "name": "Divnenko Pavel P",
+    "organizationId": 1,
+    "departmentId": 0
+  }
+]
+</syntaxhighlight>
+
+=== Получение списка сотрудников заказчика ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/organization/:ID/customer
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "id": 55,
+    "name": "Big Boss",
+    "organizationId": 1,
+    "departmentId": 0
+  },
+  {
+    "id": 132,
+    "name": "Vasiliev P",
+    "organizationId": 1,
+    "departmentId": 0
+  }
+]
+</syntaxhighlight>
+
+== Счетчики ==
+
+=== Получение всех счетчиков ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/counters
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "project": {
+    "notread": 5,
+    "inwork": 2
+  },
+  "person": {
+    "notread": 92,
+    "inwork": 4
+  },
+  "notdone": {
+    "count": 25
+  }
+}
+</syntaxhighlight>
+
+=== Получение счетчиков списка людей для согласования ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/approval/counters
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "inwork": 4,
+  "canceled": 0,
+  "rejected": 0,
+  "approved": 1,
+  "notread": 0
+}
+</syntaxhighlight>
+
+=== Получение счетчиков списка заявок ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/project/request/counters
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "inwork": 4,
+  "canceled": 0,
+  "rejected": 0,
+  "approved": 1,
+  "notread": 0
+}
+</syntaxhighlight>
+
+=== Получение счетчиков списка проектов для согласовани ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/approval/project/counters
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "inwork": 48112,
+  "canceled": 89,
+  "rejected": 0,
+  "approved": 1,
+  "notread": 0
+}
+</syntaxhighlight>
+
+== Отделы ==
+=== Получение списка отделов по городам ===
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/organization/ORGKEY/department
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "id": 36,
+    "name": "Алматы",
+    "list": [
+      {
+        "id": 126,
+        "name": "Рекрутерский"
+      },
+      ...
+    ]
+  },
+ ...
+]
+</syntaxhighlight>
+=== Получение списка отделов определённой организации ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/organization/ORGKEY/department
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+    {
+        "id": 1,
+        "organization": ORGKEY,
+        "name": "Development",
+        "children": [
+            2,
+            3
+        ]
+    },
+    {
+        "id": 2,
+        "parent": 1,
+        "organization": 1,
+        "name": "Sales",
+        "children": []
+    },
+    {
+        "id": 3,
+        "parent": 1,
+        "organization": 1,
+        "name": "Support",
+        "children": []
+    }
+]
+</syntaxhighlight>
+
+== Заявки ==
+
+=== Фильтры для портфеля заявок ===
+
+Фильтры могут иметь следующие значения:
+
+{|  class="wikitable"
+! ''Параметр'' 
+! ''Назначение''
+|-
+| approved
+| Согласованы
+|-
+| inwork
+| На рассмотрении
+|-
+| canceled
+| Отменены
+|}
+
+=== Фильтры для согласования людей и вакансий ===
+
+Фильтры могут иметь следующие значения:
+
+{|  class="wikitable" 
+! ''Параметр''
+! ''Назначение'' 
+|-
+| approved
+| Согласованы
+|-
+| rejected
+| Отклонены
+|-
+| inwork
+| На рассмотрении
+|-
+| canceled
+| Отменены
+|}
+
+=== Получение списка заявок ===
+
+Запрос (пагинация и сортировки - как у запроса /v2/project):
+<syntaxhighlight lang="html5">
+GET /v2/project/request{?approved=1&inwork=1&canceled=1&rejected=0&unread=1}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "linesTotal": 256,
+  "line": 257,
+  "linesPerPage": 258,
+  "linesLeft": 259,
+  "request": [
+    {
+      "id": 1,
+      "status": "В обработке",
+      "position": "Разработчик",
+      "quantity": 2,
+      "deadline": "YYYYMMDD",
+      "probation": 90,
+      "requirement": "Всевозможный опыт работы",
+      "personality": "Стремление к высокому качеству",
+      "responsibilities": "Фигачить без остановки",
+      "bonuses": "Можете работать хоть 24 на 7",
+      "comment": "Нужен крайне срочно",
+      "classifier": "торговля розница",
+      "reason": 374,
+      "reasonName": "замена",
+      "budget": 1,
+      "replacing": 3847,
+      "organization": 25,
+      "organizationName": "Experium",
+      "department": 4897,
+      "departmentName": "Department",
+      "responsible": 22,
+      "responsibleName": "Яров Илья",
+      "town": 234,
+      "sex": 2,
+      "experience": 1,
+      "salary": {
+        "amount": {
+          "from": 50000.25,
+          "to": 60000.35
+        },
+        "currency": 1,
+        "type": 1
+      },
+      "schedule": 1434,
+      "worktype": 457,
+      "education": {
+        "level": 374,
+        "comment": "Москвоский ВУЗ"
+      },
+      "age": {
+        "from": 25,
+        "to": 30
+      },
+      "workplace": 85,
+      "fee": {
+        "type": "percentage",
+        "percent": 5,
+        "amount": 50000,
+        "currency": 1
+      },
+      "languages": [
+        {
+          "id": 13,
+          "level": 8
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "status": "В обработке",
+      "position": "Разработчик",
+      "quantity": 2,
+      "deadline": "YYYYMMDD",
+      "probation": 90,
+      "requirement": "Всевозможный опыт работы",
+      "personality": "Стремление к высокому качеству",
+      "responsibilities": "Фигачить без остановки",
+      "bonuses": "Можете работать хоть 24 на 7",
+      "comment": "Нужен крайне срочно",
+      "classifier": "торговля розница",
+      "reason": 374,
+      "budget": 1,
+      "replacing": 3847,
+      "organization": 25,
+      "organizationName": "Experium",
+      "department": 4897,
+      "departmentName": "Department",
+      "responsible": 22,
+      "responsibleName": "Яров Илья",
+      "town": 234,
+      "sex": 2,
+      "experience": 1,
+      "salary": {
+        "amount": {
+          "from": 50000.25,
+          "to": 60000.35
+        },
+        "currency": 1,
+        "type": 1
+      },
+      "schedule": 1434,
+      "worktype": 457,
+      "education": {
+        "level": 374,
+        "comment": "Москвоский ВУЗ"
+      },
+      "age": {
+        "from": 25,
+        "to": 30
+      },
+      "workplace": 85,
+      "fee": {
+        "type": "percentage",
+        "percent": 5,
+        "amount": 50000,
+        "currency": 1
+      },
+      "languages": [
+        {
+          "id": 13,
+          "level": 8
+        }
+      ]
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Получение конкретной заявки ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/project/request/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "id": 1,
+  "status": "В обработке",
+  "position": "Разработчик",
+  "quantity": 2,
+  "deadline": "YYYYMMDD",
+  "probation": 90,
+  "requirement": "Всевозможный опыт работы",
+  "personality": "Стремление к высокому качеству",
+  "responsibilities": "Фигачить без остановки",
+  "bonuses": "Можете работать хоть 24 на 7",
+  "comment": "Нужен крайне срочно",
+  "classifier": "торговля розница",
+  "reason": 374,
+  "reasonName": "замена",
+  "budget": 1,
+  "replacing": 3847,
+  "replacingFullName": "ФИО",
+  "responsible": 22,
+  "organization": 25,
+  "organizationName": "Experium",
+  "department": 4897,
+  "departmentName": "Department",
+  "responsibleName": "Яров Илья",
+  "town": {
+    "id": 234,
+    "title": "Арзамас"
+  },
+  "sex": 2,
+  "experience": 1,
+  "salary": {
+    "amount": {
+      "from": 50000.25,
+      "to": 60000.85
+    },
+    "currency": 1,
+    "type": 2
+  },
+  "schedule": 1434,
+  "worktype": 457,
+  "education": {
+    "level": 374,
+    "comment": "Москвоский ВУЗ"
+  },
+  "age": {
+    "from": 25,
+    "to": 30
+  },
+  "workplace": 85,
+  "comments": [
+    {
+      "person": 4,
+      "personName": "Иванов А.В.",
+      "date": "YYYYMMDD",
+      "comment": "Не брать никогда"
+    }
+  ],
+  "languages": [
+    {
+      "id": 13,
+      "level": 16
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Создание заявки ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/project/request
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+    "id": 9,
+    "date": "YYYYMMDD",
+    "time": "HHMM",
+    "status": "На рассмотрении",
+    "position": "Разработчик",
+    "quantity": 2,
+    "deadline": "YYYYMMDD",
+    "probation": 90,
+    "requirement": "Всевозможный опыт работы",
+    "personality": "Стремление к высокому качеству",
+    "responsibilities": "Фигачить без остановки",
+    "bonuses": "Можете работать хоть 24 на 7",
+    "comment": "Нужен крайне срочно",
+    "classifier": "торговля розница",
+    "reason": 374,
+    "budget": 1,
+    "replacing": 3847,
+    "responsible": 54,
+    "organization": 25,
+    "department": 4897,
+    "town": 234,
+    "sex": 2,
+    "experience": 1,
+    "salary": {
+        "amount": {
+            "from": 50000.25,
+            "to": 60000.35
+        },
+        "currency": 1,
+        "type": 1
+    },
+    "schedule": 1434,
+    "worktype": 457,
+    "education": {
+        "level": 374,
+        "comment": "Москвоский ВУЗ"
+    },
+    "age": {
+        "from": 25,
+        "to": 30
+    },
+    "workplace": 85,
+    "fee": {
+        "type": "percentage",
+        "percent": 5,
+        "amount": 50000,
+        "currency": 1
+    },
+    "languages": [
+        {
+            "id": 13,
+            "level": 16
+        }
+    ]
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/project/request/1
+</syntaxhighlight>
+
+=== Аннулирование заявки ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+PUT /v2/project/request/cancel
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "id": 98,
+  "comment": "some reason"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+=== Изменение статуса заявки по ключу ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/mail/object-status
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "token": "AGAGGAGDDD",
+  "status": "reject|approve",
+  "comment": "some reason"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+=== Получение данных заявки по ключу ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/approval/link/AUTHKEY
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "id": 256,
+  "approvalType": 257,
+  "approvalName": "Проверка в СБ",
+  "status": "На согласовании",
+  "sentTime": "1637",
+  "sentDate": "20170425",
+  "inwork": false,
+  "responsible": {
+    "id": 258,
+    "name": "AA_ClearUser we"
+  },
+  "project": {
+    "id": 259,
+    "name": "Recr_StatesTest (CompName) 19/09/2016"
+  },
+  "approving": {
+    "id": 260,
+    "name": "Recr1 Stages Test1"
+  },
+  "sender": {
+    "id": 261,
+    "name": "Главный Администратор"
+  }
+}
+</syntaxhighlight>
+
+== Виджет ==
+
+=== Создание заявки ===
+
+==== Создание заявки на подбор персонала ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/office/request
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "companyName": "Рога",
+  "companyHomepage": "http://roga.ru",
+  "companyScope": "Продажа фигни",
+  "contactFirstName": "Василий",
+  "contactMiddleName": "Васильевич",
+  "contactLastName": "Петров",
+  "contactPosition": "Рекрутер",
+  "contactPhone": "84950000000",
+  "contactEmail": "petr@roga.ru",
+  "position": "Разработчик",
+  "probation": 90,
+  "requirement": "Всевозможный опыт работы",
+  "personality": "Стремление к высокому качеству",
+  "responsibilities": "Фигачить без остановки",
+  "bonuses": "Можете работать хоть 24 на 7",
+  "comment": "Нужен крайне срочно",
+  "town": 234,
+  "sex": 2,
+  "experience": 1,
+  "salary": {
+    "amount": {
+      "from": 50000.25,
+      "to": 60000.35
+    },
+    "currency": 1,
+    "type": 2
+  },
+  "schedule": 1434,
+  "worktype": 457,
+  "education": {
+    "level": 374,
+    "comment": "Москвоский ВУЗ"
+  },
+  "age": {
+    "from": 25,
+    "to": 30
+  },
+  "workplace": 85,
+  "languages": [
+    {
+      "id": 13,
+      "level": 16
+    }
+  ],
+  "typeName": "Поиск и подбор персонала"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/project/request/1
+</syntaxhighlight>
+
+==== Создание заявки на другую услугу ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/office/request
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "companyName": "Рога",
+  "companyHomepage": "http://roga.ru",
+  "companyScope": "Продажа фигни",
+  "contactFirstName": "Василий",
+  "contactMiddleName": "Васильевич",
+  "contactLastName": "Петров",
+  "contactPosition": "Рекрутер",
+  "contactPhone": "84950000000",
+  "contactEmail": "petr@roga.ru",
+  "description": "Описание",
+  "documents": [
+    {
+      "fileType": "docx",
+      "name": "resume",
+      "body": "base64 encoded body"  
+    }
+  ],
+  "typeName": "название услуги"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/project/request/1
+</syntaxhighlight>
+
+== Документы ==
+
+=== Получение атрибутов конкретного документа ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/storage/1/document/2
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+    "place": 1,
+    "key": 2,
+    "name": "Интервью",
+    "date": "19831227",
+    "creatorName": "Алексей Иванов",
+    "creator": 3,
+    "fileType": "docx",
+    "source": "HeadHunter",
+    "comment": "Красивое резюме"        
+}
+</syntaxhighlight>
+
+=== Получение содержимого конкретного документа ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/storage/PLACEKEY/document/DOCKEY/body
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+    "place": PLACEKEY,
+    "key": DOCKEY,
+    "name": "Интервью",
+    "fileType": "docx",
+    "xmlType": "CVReport",
+    "body": "base64 encoded body",
+    "docType": 1234
+}
+</syntaxhighlight>
+
+В поле docType находится тип документа, есл он равен 1234, то это xml с результатами онлайн-теста. Атрибуты xmlType и fileType являются взаимоисключающими. Если определен ''fileType'', то содержимое документа представляет собой текстовый или бинарный документ в формате ''fileType''. Если определен ''xmlType'', то ''body'' содержит XML данные для XSLT преобразования, а тип определен в ''xmlType''. Если указан ''fileType'' "'''xmht'''", то для получения индексной страницы необходимо выполнить запрос:
+
+<pre>GET /v2/storage/PLACEKEY/document/DOCKEY/body/index.html?SYS_token=AAZZZYYYNN</pre>
+
+=== Получение файла документа ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/storage/PLACEKEY/document/DOCKEY/file?SYS_token=AAZZZYYYNN
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+Raw File Data
+</syntaxhighlight>
+
+== Люди ==
+
+=== Получение информации о человеке ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/person/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "id": 11,
+  "firstName": "Петр",
+  "middleName": "Петрович",
+  "lastName": [
+    {
+      "lastName": "Ватрушкин"
+    }
+  ],
+  "exlastName": "Ведров",
+  "sourceForSys": "06/02/2015 База данных",
+  "sex": "М",
+  "bithday": "19780117",
+  "age": 37,
+  "citizenship": "Болгария",
+  "education": [
+    {
+      "graduation": 1975,
+      "level": 2,
+      "institute": "МГТУ им М. Баумана",
+      "speciality": "инженер",
+      "levelName": "Кандидат наук",
+      "type": 51,
+      "typeName": "Богословие"
+    },
+    {
+      "graduation": 1978,
+      "level": 3,
+      "institute": "церковник",
+      "speciality": "магистр церкви",
+      "levelName": "Высшее",
+      "type": 43,
+      "typeName": "Архитектурное проектирование"
+    }
+  ],
+  "address": [
+    {
+      "address": "Австрия, 100100, Какое-то метро, Вена, Красивая улица, дом 2, стр. 3, корп. 4, кв. 5",
+      "name": "Адрес фактического проживания"
+    },
+    {
+      "address": "Россия, 200200, Московская обл, Нет метро, Балашиха, Грязная улица, дом 3, стр. 4, корп. 5, кв. 6",
+      "name": "Адрес регистрации"
+    },
+    {
+      "address": "Россия, 300300, Краснодарский край, нет метро-2, Абинск, нет улицы-3, дом 8, стр. 9, корп. 7, кв. 2",
+      "name": "Адрес временной регистрации"
+    }
+  ],
+  "labels": "fdsfsd\n432adsas\nпример метки",
+  "documents": [
+    {
+      "name": "Резюме Петров В.В.",
+      "place": 3,
+      "fileType": "xls",
+      "docType": 8,  
+      "id": 29,
+      "date": "20150225",
+      "initdate": "20101211",
+      "creator": 11,
+      "creatorName": "Дивненко И.П."
+    },
+    {
+      "name": "Резюме Петров В.В.",
+      "place": 3,
+      "fileType": "docx",
+      "id": 28,
+      "date": "20150225",
+      "initdate": "20140911",
+      "creator": 11,
+      "creatorName": "Дивненко И.П."
+    },
+    {
+      "name": "Фотографии Петров В.В.",
+      "place": 33,
+      "fileType": "jpg",
+      "id": 3,
+      "date": "20150225",
+      "initdate": "20141210",
+      "creator": 11,
+      "creatorName": "Дивненко И.П."
+    },
+    {
+      "name": "Резюме fds f.",
+      "place": 3,
+      "fileType": "doc",
+      "id": 18,
+      "date": "20141217",
+      "initdate": "20141213",
+      "creator": 11,
+      "creatorName": "Дивненко И.П."
+    },
+    {
+      "name": "Фотографии fds f.",
+      "place": 33,
+      "fileType": "tif",
+      "id": 1,
+      "date": "20141217",
+      "initdate": "20141217",
+      "creator": 11,
+      "creatorName": "Дивненко И.П."
+    }
+  ],
+  "partsInProject": [
+    {
+      "name": "Внутренний рекрутмент",
+      "parts": [
+        {
+          "type": "Project",
+          "id": 6,
+          "offset": 1,
+          "text": "Кандидат - Маляр (Pathna Ltd) 27/11/2014 (отв.Дивненко П.П.)"
+        },
+        {
+          "type": "Project",
+          "id": 2,
+          "offset": 1,
+          "text": "Кандидат - Специалист отдела продаж (телемаркетолог) (Pathna Ltd) 23/07/2014 (отв.Дивненко И.П.)"
+        },
+        {
+          "type": "Project",
+          "id": 1,
+          "offset": 1,
+          "text": "Финалист - Старший программист F# (Pathna Ltd) 15/07/2014 (отв.Дивненко И.П.)"
+        }
+      ]
+    }
+  ],
+  "classifier": [
+    {
+      "name": "Индустрия",
+      "parts": [
+        {
+          "id": 1004,
+          "offset": 1,
+          "text": "/Инф. технологии/Телеком"
+        },
+        {
+          "id": 1023,
+          "offset": 1,
+          "text": "/Наука/Образование"
+        }
+      ]
+    },
+    {
+      "name": "Функционал",
+      "parts": [
+        {
+          "id": 2015,
+          "offset": 1,
+          "text": "/Инф. технологии / Телеком"
+        },
+        {
+          "id": 2021,
+          "offset": 1,
+          "text": "/Логистика"
+        },
+        {
+          "id": 2035,
+          "offset": 1,
+          "text": "/Медицина"
+        }
+      ]
+    },
+    {
+      "name": "Уровень",
+      "parts": [
+        {
+          "id": 3004,
+          "offset": 1,
+          "text": "/Руководитель высшего звена"
+        }
+      ]
+    }
+  ],
+  "lastwork": {
+    "beginWork": "201408",
+    "organization": "The Pathna Ltd",
+    "position": "программист",
+    "department": "Головной офис",
+    "endWork": "201410"
+  },
+  "workplace": [
+    {
+      "beginWork": "201408",
+      "organization": "The Pathna Ltd",
+      "position": "программист",
+      "department": "Головной офис",
+      "endWork": "201410"
+    },
+    {
+      "beginWork": "201301",
+      "organization": "",
+      "position": "дизайнер",
+      "department": "лучший отдел",
+      "endWork": "201405"
+    }
+  ],
+  "workWith": [
+    {
+      "name": "Работают с человеком",
+      "parts": [
+        {
+          "type": "People",
+          "id": 11,
+          "offset": 1,
+          "text": "Дивненко И.П. с 28/11/2014"
+        },
+        {
+          "type": "People",
+          "id": 12,
+          "offset": 1,
+          "text": "Дивненко П.П. с 25/02/2015"
+        }
+      ]
+    },
+    {
+      "name": "Контактировали сотрудники",
+      "parts": [
+        {
+          "type": "People",
+          "id": 11,
+          "offset": 1,
+          "text": "Дивненко И.П. 15/07/2014 - 25/02/2015"
+        },
+        {
+          "type": "People",
+          "id": 12,
+          "offset": 1,
+          "text": "Дивненко П.П. 27/11/2014"
+        }
+      ]
+    },
+    {
+      "name": "События, как с кандидатом",
+      "parts": [
+        {
+          "type": "Event",
+          "id": 4,
+          "offset": 1,
+          "text": "25/02/2015 Резюме <Дивненко И.П.> - см. документ"
+        },
+        {
+          "type": "Event",
+          "id": 5,
+          "offset": 1,
+          "text": "25/02/2015 Резюме <Дивненко И.П.> - см. документ"
+        },
+        {
+          "type": "Event",
+          "id": 6,
+          "offset": 1,
+          "text": "*25/02/2015 Разговор <Дивненко И.П.> <комментарий к событию>"
+        },
+        {
+          "type": "Event",
+          "id": 1,
+          "offset": 1,
+          "text": "*17/12/2014 Интервью (линейный менеджер) <Дивненко И.П.> (Старший программист F# (Pathna Ltd) 15/07/2014)"
+        },
+        {
+          "type": "Event",
+          "id": 2,
+          "offset": 1,
+          "text": "17/12/2014 Резюме <Дивненко И.П.> - см. документ"
+        }
+      ]
+    }
+  ],
+  "phone": [
+    {
+      "code": "915",
+      "type": "конт",
+      "number": "454-7134"
+    },
+    {
+      "code": "916",
+      "type": "моб",
+      "number": "454-7133",
+      "comment": "лучше по нему звонить"
+    }
+  ],
+  "email": [
+    {
+      "type": "раб",
+      "email": "ronwilson@mail.ru"
+    },
+    {
+      "type": "личн",
+      "email": "ivan@divnenko.ru"
+    }
+  ],
+  "web": [
+    {
+      "type": "Twitter",
+      "address": "www.ya.ru"
+    },
+    {
+      "type": "LiveJournal",
+      "address": "www.rambler.ru"
+    }
+  ],
+  "messenger": [
+    {
+      "type": "AOL",
+      "im": "100200200"
+    },
+    {
+      "type": "GTalk",
+      "im": "hehehehe"
+    }
+  ],
+  "language": [
+    {
+      "language": "немецкий (Читаю проф. лит.)"
+    },
+    {
+      "language": "английский (Свободный)"
+    }
+  ],
+  "comment": [
+    {
+      "comment": "25/02/2015 Дивненко И.П.: какой-то общий комментарий"
+    }
+  ],
+  "photo": {
+    "type": "jpeg",
+    "body": "BASE64"
+  }
+}
+</syntaxhighlight>
+
+=== Получение списка людей из портфеля рекрутмента ===
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/SotrInPortfelRecr
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "id": 679844,
+    "name": "Rekarchuk A"
+  },
+  {
+    "id": 679690,
+    "name": "Tereschenko Alex Shelomentsev"
+  },
+  ..
+]
+</syntaxhighlight>
+
+
+=== Получение списка людей для согласования ===
+
+Запрос (пагинация и фильтры - как у запроса /v2/project):
+<syntaxhighlight lang="html5">
+GET /v2/approval{?approved=1&rejected=1&inwork=1&canceled=1}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "linesTotal": 256,
+  "line": 257,
+  "linesPerPage": 258,
+  "linesLeft": 259,
+  "approval": [
+    {
+      "id": 1,
+      "status": "Рассмотрен",
+      "inwork": true,
+      "type": 3,
+      "typeName": "Проверка в СБ",
+      "time": "2220",
+      "date": "YYYYMMDD",
+      "firstName": "Василий",
+      "middleName": "Васильевич",
+      "lastName": "Пупкин",
+      "sex": "male",
+      "birthdate": "YYYYMMDD",
+      "age": 33,
+      "senderName": "Иванов Иван Иванович",
+      "responsibleName": "Петров Петр Петрович",
+      "responsible": 1,
+      "projectName": "Проект X",
+      "projectFullName": "Проект X (OOO)",
+      "comment": "редкий спец",
+      "citizenship": "Австрия",
+      "lastWorkplace": {
+        "personKey": 77,
+        "organization": -1,
+        "organizationName": "ООО Рога и Копыта",
+        "beginWorking": "200702",
+        "endWorking": "200906"
+      },
+      "documents": [
+        {
+          "place": 1,
+          "id": 2,
+          "name": "Интервью",
+          "date": "YYYYMMDD",
+          "creatorName": "Алексей Иванов",
+          "creator": 3,
+          "fileType": "docx",
+          "source": "HeadHunter",
+          "comment": "Красивое резюме"
+        },
+        {
+          "place": 2,
+          "id": 3,
+          "name": "Резюме",
+          "date": "YYYYMMDD",
+          "creatorName": "Алексей Иванов",
+          "creator": 3,
+          "fileType": "pdf",
+          "source": "Электронная почта",
+          "comment": "Имеется фотография"
+        }
+      ],
+      "comments": [
+        {
+          "person": 4,
+          "personName": "Иванов А.В.",
+          "date": "YYYYMMDD",
+          "comment": "Не брать никогда"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "status": "Отклонен",
+      "inwork": true,
+      "time": "2220",
+      "date": "YYYYMMDD",
+      "firstName": "Иван",
+      "middleName": "Иваныч",
+      "lastName": "Иванов",
+      "sex": "male",
+      "birthdate": "YYYYMMDD",
+      "age": 28,
+      "senderName": "Иванов Иван Иванович",
+      "responsibleName": "Петров Петр Петрович",
+      "responsible": 1,
+      "projectName": "Проект X",
+      "projectFullName": "Проект X (AAA)",
+      "comment": "редкий спец",
+      "citizenship": "Австрия",
+      "lastWorkplace": {
+        "personKey": 77,
+        "organization": -1,
+        "organizationName": "ООО Рога и Копыта",
+        "beginWorking": "200702",
+        "endWorking": "200906"
+      },
+      "documents": [],
+      "comments": [
+        {
+          "person": 4,
+          "personName": "Иванов А.В.",
+          "date": "YYYYMMDD",
+          "comment": "Странный какой-то"
+        }
+      ]
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Получение человека из списка согласования ===
+
+Это запрос можно выполнять без заголовка '''Authorization''', передавая '''token''' из ссылки письма через GET параметр '''authtoken'''
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/approval/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "key": 1,
+  "personKey": 77,
+  "status": "Рассмотрен",
+  "inwork": true,
+  "type": 3,
+  "typeName": "Проверка в СБ",
+  "time": "2220",
+  "date": "19800321",
+  "firstName": "Василий",
+  "middleName": "Васильевич",
+  "lastName": "Пупкин",
+  "maidenName": "Соколов",
+  "sourceNameDetails": "VKontakte",
+  "sourceName": "Социальная сеть",
+  "source": 20,
+  "sex": "male",
+  "birthdate": "19800321",
+  "age": 73,
+  "senderName": "Иванов Иван Иванович",
+  "sender": 1,
+  "responsibleName": "Петров Петр Петрович",
+  "responsible": 1,
+  "projectName": "Проект X",
+  "comment": "редкий спец",
+  "citizenship": "Австрия",
+  "letter": "HTML content",
+  "lastWorkplace": {
+    "personKey": 77,
+    "organization": -1,
+    "organizationName": "ООО Рога и Копыта",
+    "beginWorking": "200702",
+    "endWorking": "200906",
+    "department": "Какой-то отдел"
+  },
+  "comments": [
+    {
+      "person": 4,
+      "personName": "Иванов А.В.",
+      "date": "YYYYMMDD",
+      "comment": "Лучше взять"
+    }
+  ],
+  "workplaces": [
+    {
+      "organizationName": "ЗАО Нефтегаз",
+      "position": "Повар",
+      "beginWorking": "200702",
+      "endWorking": "200906"
+    },
+    {
+      "organizationName": "ЗАО Газпром",
+      "position": "Уборщик",
+      "beginWorking": "200902",
+      "endWorking": "201008"
+    }
+  ],
+  "phones": [
+    {
+      "type": "раб",
+      "code": "495",
+      "number": "1112233",
+      "comment": "почти не отвечает"
+    },
+    {
+      "type": "моб",
+      "code": "123",
+      "number": "233333",
+      "comment": "долго отвечает"
+    }
+  ],
+  "address": [
+    {
+      "index": "122133",
+      "regionName": "Ярославская область",
+      "region": 4,
+      "district": "Заводской район",
+      "townName": "Пыжево",
+      "town": 89,
+      "street": "ул. Нижние Васюки",
+      "house": 3,
+      "housing": "4K",
+      "building": 5,
+      "flat": 179,
+      "countryName": "Россия",
+      "country": 3,
+      "type": "Адрес фактического места жительства"
+    }
+  ],
+  "documents": [
+    {
+      "place": 1,
+      "id": 2,
+      "name": "Интервью",
+      "date": "19831227",
+      "creatorName": "Алексей Иванов",
+      "creator": 3,
+      "fileType": "docx",
+      "source": "HeadHunter",
+      "comment": "Красивое резюме"
+    },
+    {
+      "place": 2,
+      "id": 3,
+      "name": "Резюме",
+      "date": "19831227",
+      "creatorName": "Алексей Иванов",
+      "creator": 3,
+      "fileType": "pdf",
+      "source": "Электронная почта",
+      "comment": "Имеется фотография"
+    }
+  ],
+  "languages": [
+    {
+      "name": "Английский",
+      "level": "Базовый"
+    },
+    {
+      "name": "Французкий",
+      "level": "Свободный"
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Утверждение человека из списка согласования ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/approval/:ID/approve
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+    "comment":"Some comment"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 204 No Content
+</syntaxhighlight>
+
+=== Отклонение человека из списка согласования ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/approval/:ID/reject
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+    "comment":"Some comment"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 204 No Content
+</syntaxhighlight>
+
+== Проекты ==
+
+=== Получение списка проектов для согласования ===
+
+Запрос (пагинация как в запросе /v2/project):
+<syntaxhighlight lang="html5">
+GET /v2/approval/project{?approved=1&rejected=1&inwork=1&canceled=1}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "linesTotal": 256,
+  "line": 257,
+  "linesPerPage": 258,
+  "linesLeft": 259,
+  "project": [
+    {
+      "id": 1,
+      "status": "На согласовании",
+      "inwork": true,
+      "type": 2,
+      "typeName": "Проверка в СБ",
+      "responsible": 22,
+      "responsibleName": "Дуров Игор",
+      "date": "YYYYMMDD",
+      "senderName": "Григорян А.С.",
+      "position": "Дизайнер печенок",
+      "quantity": 2,
+      "town": 63,
+      "townName": "Орск",
+      "salary": {
+        "amount": {
+          "from": 50000.25,
+          "to": 60000.35
+        },
+        "currency": 1,
+        "type": 1
+      }
+    },
+    {
+      "id": 2,
+      "status": "Аннулирован",
+      "inwork": false,
+      "responsible": 22,
+      "responsibleName": "Маслов Сергей",
+      "date": "YYYYMMDD",
+      "senderName": "Акапян А.С.",
+      "position": "Руководитель палаток",
+      "quantity": 3,
+      "town": 62,
+      "townName": "Тюмень",
+      "salary": {
+        "amount": {
+          "from": 90000.25,
+          "to": 100000.38
+        },
+        "currency": 2,
+        "type": 1
+      }
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Получение проекта из списка согласования ===
+
+Это запрос можно выполнять без заголовка '''Authorization''', передавая '''token''' из ссылки письма через GET параметр '''authtoken'''
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/approval/project/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "key": 2,
+  "status": "Рассмотрен",
+  "type": 3,
+  "typeName": "Наличие в штатном расписании",
+  "inwork": false,
+  "time": "HHMM",
+  "date": "YYYYMMDD",
+  "responsible": 10,
+  "responsibleName": "Пупкин Вася",
+  "project": 3,
+  "sender": 4,
+  "senderName": "Петров Олег",
+  "position": "Повар",
+  "quantity": 44,
+  "reason": 1,
+  "reasonName": "замена",
+  "replacing": 5,
+  "replacingName": "Волков Алексей",
+  "town": 4,
+  "townName": "Сочи",
+  "department": 6,
+  "departmentName": "Отдел продаж",
+  "salary": {
+    "amount": {
+      "from": 50000.29,
+      "to": 60000.33
+    },
+    "currency": 1,
+    "type": 1,
+    "_embedded": {
+      "currency": {
+        "id": 268,
+        "name": "String"
+      },
+      "type": {
+        "id": 269,
+        "name": "String"
+      }
+    }
+  },
+  "bonus": "Печеньки и сладости",
+  "probation": 90,
+  "schedule": 3,
+  "worktype": 2,
+  "education": {
+    "level": 2,
+    "comment": "лучше из МГУ",
+    "name": "не имеет значения"
+  },
+  "experience": 21,
+  "age": {
+    "from": 20,
+    "to": 30
+  },
+  "sex": 2,
+  "workplace": 4,
+  "fee": {
+    "type": "Процент от договора",
+    "percent": 12,
+    "amount": 100000,
+    "currency": 9
+  },
+  "customer": {
+    "id": 11,
+    "name": "Ivan Ivanovich Ivanov"
+  },
+  "budget": 1,
+  "budgetName": "бюджет",
+  "requestDate": "YYYYMMDD",
+  "deadline": "YYYYMMDD",
+  "requirement": "большой опыт в печенках",
+  "personality": "коммуникабельный и радостный",
+  "responsibilities": "варить печенки",
+  "comments": [
+    {
+      "person": 8,
+      "personName": "Петров Акакий",
+      "date": "YYYYMMDD",
+      "comment": "Точно нужно брать"
+    }
+  ],
+  "languages": [
+    {
+      "id": 13,
+      "level": 8
+    }
+  ],
+  "company": "ЗАО Рога и Копыта",
+  "letter": "HTML content",
+  "documents": [
+    {
+      "place": 1,
+      "id": 2,
+      "name": "Интервью",
+      "date": "YYYYMMDD",
+      "creatorName": "Алексей Иванов",
+      "creator": 3,
+      "fileType": "docx",
+      "source": "HeadHunter",
+      "comment": "Красивое резюме"
+    },
+    {
+      "place": 2,
+      "id": 3,
+      "name": "Резюме",
+      "date": "YYYYMMDD",
+      "creatorName": "Алексей Иванов",
+      "creator": 3,
+      "fileType": "pdf",
+      "source": "Электронная почта",
+      "comment": "Имеется фотография"
+    }
+  ],
+  "classifier": [
+    {
+      "name": "Описание позиции",
+      "parts": [
+        {
+          "id": 7029,
+          "offset": 1,
+          "text": "/График работы/Гибкий график"
+        },
+        {
+          "id": 7024,
+          "offset": 1,
+          "text": "/Место работы/Удаленно"
+        },
+        {
+          "id": 7003,
+          "offset": 1,
+          "text": "/Наличие в бюджете/нет"
+        },
+        {
+          "id": 7011,
+          "offset": 1,
+          "text": "/Образование/среднее"
+        },
+        {
+          "id": 7038,
+          "offset": 1,
+          "text": "/Пол/муж"
+        },
+        {
+          "id": 7005,
+          "offset": 1,
+          "text": "/Причина возникновения/новая"
+        },
+        {
+          "id": 7019,
+          "offset": 1,
+          "text": "/Стаж/5 лет"
+        },
+        {
+          "id": 7034,
+          "offset": 1,
+          "text": "/Тип занятости/Проектная/временная"
+        }
+      ]
+    },
+    {
+      "name": "Индустрия",
+      "parts": [
+        {
+          "id": 1004,
+          "offset": 1,
+          "text": "/Инф. технологии/Телеком"
+        }
+      ]
+    },
+    {
+      "name": "Функционал",
+      "parts": [
+        {
+          "id": 2020,
+          "offset": 1,
+          "text": "/Контроль качества"
+        }
+      ]
+    },
+    {
+      "name": "Уровень",
+      "parts": [
+        {
+          "id": 3001,
+          "offset": 1,
+          "text": "/Начальный уровень"
+        }
+      ]
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Утверждение проекта из списка согласования ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/approval/project/:ID/approve
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+    "comment":"Some comment"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 204 No Content
+</syntaxhighlight>
+
+=== Отклонение проекта из списка согласования ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/approval/project/:ID/reject
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+    "comment":"Some comment"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 204 No Content
+</syntaxhighlight>
+
+=== Получение проекта ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/project/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "project": {
+    "id": 1,
+    "accessLevel": 31
+  },
+  "posname": [
+    {
+      "type": "Project",
+      "id": 1,
+      "text": "Старший программист F#"
+    }
+  ],
+  "vacancies": 5,
+  "company": [
+    {
+      "type": "Company",
+      "id": 1,
+      "text": "The Pathna Ltd"
+    }
+  ],
+  "projectType": "Внешний рекрутмент",
+  "category": "Высокая активность",
+  "svodkapart": "В работе",
+  "categorypart": "A",
+  "quantity": 5,
+  "town": "Камень-на-Оби",
+  "conditions": "Тип гонорара: Процент&#x0A;Гонорар: 0,19%&#x0A;Сумма гонорара: 1000!RUR",
+  "closeBefore": "20151212",
+  "foreignLanguages": "немецкий",
+  "sex": "не имеет значения",
+  "age": "от 25 до 40",
+  "workplace": "У работодателя",
+  "schedule": "Полный день",
+  "worktype": "Полная",
+  "departmentTree": "/йогурты/малиновые",
+  "posDepartment": "малиновые",
+  "probation": 90,
+  "amountMin": 1200,
+  "reason": "Замена",
+  "budget": "Да",
+  "amountMax": 1500,
+  "currency": "!RUR",
+  "amountGrossNet": "До вычета налогов",
+  "bonus": "нет",
+  "experience": "много опыта",
+  "typeofexperience": "5 лет",
+  "responsibilities": "продавать",
+  "education": "высшее",
+  "personal": "умееет общаться с людьми",
+  "requestDate": "20150203",
+  "inWorkDate": "20150206",
+  "duration": 3,
+  "restPos": 2,
+  "status": "В работе. Высокая активность",
+  "labels": "fdsfsd\n432adsas\nпример метки",
+  "comments": "18/02/2015 Ткачук Д.: 112",
+  "approval": [
+    {
+      "type": "PrjApproval",
+      "id": 25,
+      "text": "27/11/2014 На согласовании (Подтверждение руководителя компании) (Дивненко И.П.)"
+    }
+  ],
+  "participants": [
+    {
+      "type": "People",
+      "id": 12,
+      "text": "Отв. - Дивненко Павел П"
+    },
+    {
+      "type": "People",
+      "id": 11,
+      "text": "Line Manager - Дивненко Иван Петрович"
+    }
+  ],
+  "participantsDetailed": [
+    {
+      "id": 64469,
+      "type": "People",
+      "text": "Арутинов Вадим Борисович",
+      "role": 4,
+      "roleName": "Клиент",
+      "roleTypeName": "Client",
+      "company": {
+        "id": 1,
+        "type": "Company",
+        "text": "АНКОР 22 Москва"
+      }
+    }
+  ],
+  "participators": [
+    {
+      "type": "People",
+      "id": 131,
+      "text": "John Romero"
+    }
+  ],
+  "finalist": [
+    {
+      "type": "People",
+      "id": 33,
+      "text": "Гаденов Дмитрий Сергеевич"
+    }
+  ],
+  "candidates": [
+    {
+      "type": "People",
+      "id": 1012,
+      "text": "Буденов Александ Валерьевич"
+    }
+  ],
+  "commited": [
+    {
+      "type": "People",
+      "id": 29,
+      "text": "Путин Владимир Вольфович"
+    }
+  ],
+  "documents": [
+    {
+      "name": "Резюме Петров Петр",
+      "place": 3,
+      "fileType": "doc",
+      "id": 18,
+      "date": "20141217",
+      "initdate": "20141217",
+      "creator": 11,
+      "creatorName": "Дивненко И.П."
+    },
+    {
+      "name": "Фотографии Петров Петр",
+      "place": 33,
+      "fileType": "tif",
+      "id": 1,
+      "date": "20141217",
+      "initdate": "20141217",
+      "creator": 11,
+      "creatorName": "Дивненко И.П."
+    }
+  ]
+}
+</syntaxhighlight>
+
+== Сотрудники ==
+
+=== Получение списка сотрудников отдела ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/organization/ORGKEY/department/DEPID/person
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+    {
+        "id": 1,
+        "firstName": "Василий",
+        "middleName": "Васильевич",
+        "lastName": "Пупкин",
+        "sex": "male",
+        "birthdate": "19800321",
+        "age": 33
+    },
+    {
+        "id": 2,
+        "firstName": "Иван",
+        "middleName": "Иваныч",
+        "lastName": "Иванов",
+        "sex": "male",
+        "birthdate": "19850710",
+        "age": 28
+    }
+]
+</syntaxhighlight>
+
+== Компания ==
+
+=== Получение информации о компании ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/company/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "id": 21,
+  "webpage": "www.rtfm.com",
+  "labels": "метка-0\nметка-1\nметка-2\nметка-3\nметка-4",
+  "contacts": "(916) 454-7134 (факс)\n(915) 454-7134 (конт)",
+  "address": "Россия, Москва г, Москва, Летниковская, дом10, стр.4, дом10, стр.4, корп.4, кв.9991",
+  "comment": [
+    {
+      "type": "People",
+      "id": 11,
+      "text": "20150303 Дивненко И.П.: комментарий к компании"
+    }
+  ],
+  "altnames": [
+    {
+      "type": "Company",
+      "id": 1,
+      "text": "Santiago"
+    }
+  ],
+  "name": [
+    {
+      "type": "Company",
+      "id": 1,
+      "text": "The Pathna Ltd"
+    }
+  ],
+  "documents": [
+    {
+      "name": "Протокол Маляр (Pathna Ltd) 27/11/2014",
+      "place": 3,
+      "fileType": "doc",
+      "id": 30,
+      "date": "20150225",
+      "creator": 12,
+      "creatorName": "Дивненко П.П."
+    }
+  ],
+  "classifier": [
+    {
+      "name": "Индустрия",
+      "parts": [
+        {
+          "id": 1024,
+          "offset": 1,
+          "text": "/Другое"
+        },
+        {
+          "id": 1005,
+          "offset": 1,
+          "text": "/Логистика"
+        },
+        {
+          "id": 1023,
+          "offset": 1,
+          "text": "/Наука/Образование"
+        },
+        {
+          "id": 1016,
+          "offset": 1,
+          "text": "/Профессиональные услуги/Кадровый консалтинг"
+        },
+        {
+          "id": 1019,
+          "offset": 1,
+          "text": "/Профессиональные услуги/Лизинг"
+        },
+        {
+          "id": 1021,
+          "offset": 1,
+          "text": "/Розница"
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "type": "Company",
+      "id": 2,
+      "text": "АНКОР"
+    }
+  ],
+  "legal": [
+    {
+      "type": "KadryOrg",
+      "id": 1,
+      "text": "The Pathna Ltd"
+    }
+  ]
+}
+</syntaxhighlight>
+
+== Настройки ==
+
+=== Запрос нескольких настроек ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/settings?list=<comma separated list>
+</syntaxhighlight>
+
+В списке перечисляются URI настроек относительно /v2/settings/ (/v2/settings/project -> project).
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "name": "project",
+    "value": {
+      "fields": [
+        {
+          "name": "posname",
+          "value": false
+        },
+        {
+          "name": "duration",
+          "value": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "worksheet",
+    "value": {
+      "fields": [
+        {
+          "name": "column-1",
+          "value": false
+        },
+        {
+          "name": "column-2",
+          "value": false
+        }
+      ]
+    }
+  }
+]
+</syntaxhighlight>
+
+=== Настройки портфеля проектов ===
+
+==== Сохранение настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/settings/project
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "fields": [
+    {
+      "name": "posname",
+      "value": false
+    },
+    {
+      "name": "duration",
+      "value": true
+    }
+  ]
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+==== Загрузка настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/settings/project
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "fields": [
+    {
+      "name": "posname",
+      "value": false
+    },
+    {
+      "name": "duration",
+      "value": true
+    }
+  ]
+}
+</syntaxhighlight>
+
+==== Удаление настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+DELETE /v2/settings/project
+
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 204 No Content
+</syntaxhighlight>
+
+=== Настройки сводки ===
+
+==== Сохранение настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/settings/worksheet
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "fields": [
+    {
+      "name": "posname",
+      "value": false
+    },
+    {
+      "name": "duration",
+      "value": true
+    }
+  ]
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+==== Загрузка настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/settings/worksheet
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "fields": [
+    {
+      "name": "posname",
+      "value": false
+    },
+    {
+      "name": "duration",
+      "value": true
+    }
+  ]
+}
+</syntaxhighlight>
+
+==== Удаление настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+DELETE /v2/settings/worksheet
+
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 204 No Content
+</syntaxhighlight>
+
+=== Фильтры проекта ===
+
+==== Сохранение настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/settings/filters/project
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+   <some valid JSON content>
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+==== Загрузка настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/settings/filters/project
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+   <some valid JSON content>
+}
+</syntaxhighlight>
+
+==== Удаление настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+DELETE /v2/settings/filters/project
+
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 204 No Content
+</syntaxhighlight>
+
+=== Фильтры сводки ===
+
+==== Сохранение настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/settings/filters/worksheet
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+   <some valid JSON content>
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+==== Загрузка настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/settings/filters/worksheet
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+   <some valid JSON content>
+}
+</syntaxhighlight>
+
+==== Удаление настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+DELETE /v2/settings/filters/worksheet
+
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 204 No Content
+</syntaxhighlight>
+
+=== Сохранение фильтров согласования человека ===
+
+==== Сохранение настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/settings/filters/person_approval
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+   <some valid JSON content>
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+==== Загрузка настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/settings/filters/person_approval
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+   <some valid JSON content>
+}
+</syntaxhighlight>
+
+==== Удаление настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+DELETE /v2/settings/filters/person_approval
+
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 204 No Content
+</syntaxhighlight>
+
+=== Фильтры согласования заявки ===
+
+==== Сохранение настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/settings/filters/project_approval
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+   <some valid JSON content>
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+==== Загрузка настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/settings/filters/project_approval
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+   <some valid JSON content>
+}
+</syntaxhighlight>
+
+==== Удаление настроек ====
+
+Запрос:
+<syntaxhighlight lang="html5">
+DELETE /v2/settings/filters/project_approval
+
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 204 No Content
+</syntaxhighlight>
+
+== Данные об уведомлениях ==
+
+=== Сохранение данных об уведомлениях ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/data/notify
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+=== Загрузка данных об уведомлениях ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/data/notify
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+}
+</syntaxhighlight>
+
+=== Удаление данных об уведомлениях ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+DELETE /v2/data/notify
+
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 204 No Content
+</syntaxhighlight>
+
+== Сводки ==
+
+=== Фильтры для сводки проектов ===
+
+Фильтры могут иметь следующие значения:
+
+{|  class="wikitable" 
+! ''Параметр''
+! ''Назначение'' 
+|-
+| closedtfrom
+| Дата закрытия c (в значении строка с датой)
+|-
+| closedtto
+| Дата закрытия по (в значении строка с датой)
+|-
+| responsible
+| Является ответственным
+|-
+| coexecutor
+| Является соисполнителем
+|-
+| request
+| В состоянии запроса
+|-
+| inwork
+| В работе
+|-
+| canceled
+| Аннулирован
+|-
+| held
+| Заморожен
+|-
+| done
+| Завершен
+|-
+| closed
+| Закрыт
+|-
+| groupbycat
+| Группировать по категории
+|-
+| intrecr
+| Внутренний рекрутмент
+|-
+| intrecrexpr
+| Внутренний экспресс-рекрутмент
+|-
+| customer
+| Заказчик
+|-
+| custexpr
+| Экспресс-заказчик
+|}
+
+=== Сводка проектов ===
+
+Формат запроса (query):
+Запрашиваемые поля должны быть сохранены в настройках (см. [[Media:WebTablesCommonFields_with_Aliases.xls|Web Tables Common Fields]] )
+<pre>
+GET /v2/project
+GET /v2/person/:ID/project
+</pre>
+
+Сортировка:
+{|  class="wikitable" 
+! ''Название'' 
+! ''Описание'' 
+|-
+| firstField
+| первое поле
+|-
+| firstOrder
+| порядок inc или dec
+|-
+| secondField
+| второе поле
+|-
+| secondOrder
+| порядок inc или dec
+|-
+| thirdField
+| третье поле
+|-
+| thirdOrder
+| порядок inc или dec
+|}
+
+Флаги пагинации:
+{|  class="wikitable" 
+! ''Название фильтра'' 
+! ''Значение'' 
+|-
+| line
+| текущая позиция
+|-
+| linesPerPage
+| кол-во строк на странице
+|}
+
+Данные по пагинации приходящие в ответе:
+{|  class="wikitable" 
+! ''Название фильтра'' 
+! ''Значение'' 
+|-
+| line
+| текущая позиция
+|-
+| linesPerPage
+| кол-во строк на странице
+|-
+| linesTotal
+| кол-во строк всего
+|-
+| linesLeft
+| строк осталось
+|}
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "linesTotal": 1,
+  "line": 0,
+  "linesPerPage": 0,
+  "linesLeft": 1,
+  "projects": [
+    {
+      "name": "В работе",
+      "list": [
+        {
+          "subname": "Высокая активность",
+          "sublist": [
+            {
+              "id": 23,
+              "accessLevel": 31,
+              "probation": 30,
+              "feeperpos": 2000.5,
+              "status": "В р",
+              "closebefore": "20200912",
+              "foreignLanguage": "английский",
+              "duration": 119,
+              "budget": "yes",
+              "reason": "надо значит надо",
+              "responsibilities": "- Исходящие звонки по предоставленной базе.\n- Консультирование клиентов по продуктам компании.\n- Оформление заявок на встречу для менеджеров по продажам.",
+              "posname": [
+                {
+                  "type": "Project",
+                  "id": 1,
+                  "text": "Старший программист F#"
+                }
+              ],
+              "town": "Камень-на-Оби",
+              "feecurrency": "!RUR",
+              "salary": 3000.4,
+              "requirements": "Очень качественно делать работу",
+              "comments": "Комментарий",
+              "transprice": "Трансферная цена",
+              "feecomments": "Комментарий",
+              "cforesps": "Resps",
+              "execdate": "20130313",
+              "prjstart": "20160920",
+              "lastchgdate": "20170608",
+              "category": "A",
+              "company": [
+                {
+                  "type": "Company",
+                  "id": 1,
+                  "text": "Pathna Ltd"
+                }
+              ],
+              "workcommit": [
+                {
+                  "type": "People",
+                  "id": 550213,
+                  "text": "Панина Екатерина"
+                }
+              ],
+              "approval": [
+                {
+                  "type": "People",
+                  "id": 15,
+                  "text": "Recruiter - John Romero"
+                }
+              ],
+              "participants": [
+                {
+                  "type": "People",
+                  "id": 11,
+                  "text": "Отв. - Дивненко Иван Петрович"
+                }
+              ],
+              "participators": [
+                {
+                  "type": "People",
+                  "id": 131,
+                  "text": "John Romero"
+                }
+              ],
+              "candidates": [
+                {
+                  "type": "People",
+                  "id": 15,
+                  "text": "Recruiter - John Romero"
+                }
+              ],
+              "result": [
+                {
+                  "type": "Company",
+                  "id": 11,
+                  "text": "Кандидат на трудоустройство"
+                }
+              ],
+              "positionResult": [
+                {
+                  "type": "People",
+                  "id": 131,
+                  "text": "390000.00 !RUB (Стивкина Г.А. - 130000.00 !RUB)"
+                }
+              ],
+              "classifiers": [
+                {
+                  "id": 33541,
+                  "text": "/Компания/!Коммерческая"
+                }
+              ],
+              "participantsDetailed": [
+                {
+                  "id": 64469,
+                  "type": "People",
+                  "text": "Арутинов Вадим Борисович",
+                  "role": 4,
+                  "roleName": "Клиент",
+                  "roleTypeName": "Client",
+                  "company": {
+                    "id": 1,
+                    "type": "Company",
+                    "text": "АНКОР 22 Москва"
+                  }
+                }
+              ],
+              "negwithclient": [
+                {
+                  "type": "People",
+                  "id": 23,
+                  "text": "Recruiter - User005 User005 User005"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+</syntaxhighlight>
+
+=== Получение search worksheet из сводки проектов ===
+
+Сортировка:
+{|  class="wikitable" 
+! ''Название'' 
+! ''Описание'' 
+|-
+| firstField
+| первое поле
+|-
+| firstOrder
+| порядок inc или dec
+|-
+| secondField
+| второе поле
+|-
+| secondOrder
+| порядок inc или dec
+|-
+| thirdField
+| третье поле
+|-
+| thirdOrder
+| порядок inc или dec
+|}
+
+{| class="wikitable"
+|-
+! Сортировки !! Назначение
+|-
+| status || состояние запроса. Возрастание: в порядке выполнения, например, dratf, inwork, close (названия состояний специфичны для разных запросов)
+|-
+| responsibleName || получатель. Возрастание: по алфавиту. Везде, где для людей пишется "Name" имеется в виду полные фамилия имя отчество
+|-
+| senderName || отправитель
+|-
+| date || дата отправки
+|-
+| peopleName || человек, о котором запрос (сейчас Согласование люди)
+|-
+| projectName || название проекта, о котором запрос (сейчас Согласование люди)
+|-
+| companyName || название компании, о которой запрос (сейчас не используется)
+|-
+| position || название позиции, о которой запрос (сейчас Согласование вакансии)
+|-
+| townName || город (для Согласование вакансии)
+|}
+Принимает следущие фильтры
+{|  class="wikitable" 
+! ''Название фильтра'' 
+! ''Значение'' 
+|-
+| groupByCategory
+| сгрупировать людей по категориям
+|-
+| applicant
+| претенденты
+|-
+| outApplicant
+| исключены из претендентов
+|-
+| candidates
+| кандидаты
+|-
+| outCandidates
+| исключены из кандидатов
+|-
+| probation
+| на испытательном сроке
+|-
+| probationFail
+| не прошли испытательный срок
+|-
+| probationSuccess
+| прошли испытательный срок
+|-
+| finalist
+| финалисты
+|-
+| outFinalist
+| исключены из финалистов
+|}
+
+Флаги пагинации:
+{|  class="wikitable" 
+! ''Название фильтра'' 
+! ''Значение'' 
+|-
+| line
+| текущая позиция
+|-
+| linesPerPage
+| кол-во строк на странице
+|}
+Данные по пагинации приходящие в ответе:
+{|  class="wikitable" 
+! ''Название фильтра'' 
+! ''Значение'' 
+|-
+| line
+| текущая позиция
+|-
+| linesPerPage
+| кол-во строк на странице
+|-
+| linesTotal
+| кол-во строк всего
+|-
+| linesLeft
+| строк осталось
+|}
+
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/project/:ID/worksheet
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "linesTotal": 0,
+  "line": 0,
+  "linesPerPage": 10,
+  "linesLeft": 0,
+  "project": {
+    "id": 1,
+    "accessLevel": 31,
+    "projectType": "Внутренний рекрутмент",
+    "projectTypeId": "internal_recruitment",
+    "status": 0,
+    "participators": [
+      {
+        "type": "People",
+        "id": 12,
+        "text": "Отв. - Дивненко Павел П"
+      }
+    ]
+  },
+  "people": [
+    {
+      "id": 101,
+      "status": "13/09/2013 Переведен в Кандидаты",
+      "additionalStatus": "Ждем решения Заказчика",
+      "text": "Петров Петр",
+      "sex": 0,
+      "birthdate": "19990101",
+      "age": 17,
+      "working": [
+        {
+          "type": "Event",
+          "id": 1,
+          "text": "*17/12/2014 Интервью (линейный менеджер) (Дивненко И.П.) <Дивненко И.П.>"
+        },
+        {
+          "type": "",
+          "id": 0,
+          "text": "17/12/2014 Переведен в Финалисты"
+        },
+        {
+          "type": "",
+          "id": 0,
+          "text": "17/12/2014 Переведен в Кандидаты"
+        }
+      ],
+      "sourceForSys": "15/12/2014 База данных",
+      "sourceForProject": "20/05/2014 Работный сайт (HeadHunter)",
+      "notes": "Some Ancor notes",
+      "comment": "Some other comments",
+      "contacts": "271-7173 (конт)&#x0A;251-4125 (конт)&#x0A;murachev@list.ru (конт)&#x0A;avdyachenco@mail.ru (конт)",
+      "workplace": {
+        "dateFrom": "201302",
+        "dateTo": "201704",
+        "company": "Goodyear Russia"
+      },
+      "position": "Инженер 1 категории диспетчерской службы управления логистики и грузоперевозок",
+      "citizenship": "Болгария",
+      "lastwork": {
+        "beginWork": "201408",
+        "organization": "The Pathna Ltd",
+        "position": "программист",
+        "department": "Головной офис",
+        "endWork": "201410"
+      },
+      "education": [
+        {
+          "graduation": 1975,
+          "level": 2,
+          "institute": "МГТУ им М. Баумана",
+          "speciality": "инженер",
+          "levelName": "Кандидат наук",
+          "type": 51,
+          "typeName": "Богословие"
+        }
+      ],
+      "documents": [
+        {
+          "name": "Резюме Петров Петр",
+          "place": 3,
+          "fileType": "doc",
+          "docType": 102,
+          "id": 18,
+          "date": "20141217",
+          "creator": 11,
+          "creatorName": "Дивненко И.П."
+        },
+        {
+          "name": "Фотографии Петров Петр",
+          "place": 33,
+          "fileType": "tif",
+          "id": 1,
+          "date": "20141217",
+          "creator": 11,
+          "creatorName": "Дивненко И.П."
+        }
+      ],
+      "partsInProject": [
+        {
+          "id": 66,
+          "type": "Project",
+          "text": "Кандидат - Ведущий специалист по лизингу (ТАНЯ) (БХ - Лизинг) 13/05/2013 (отв.* О.)",
+          "offset": 1
+        }
+      ]
+    }
+  ]
+}
+</syntaxhighlight>
+
+==== Фиксированные списки ====
+
+Поле ''projectTypeId'' может примать одно из следующих значений:
+
+{|  class="wikitable" 
+! ''Значение'' 
+! ''Тип проекта'' 
+|-
+| external_recruitment 
+| Внешний рекрутмент
+|-
+| request 
+| Запрос
+|-
+| mass_recruitment_old 
+| Массовый набор (old)
+|-
+| outstaffing 
+| Outstaffing
+|-
+| outplacement 
+| Outplacement
+|-
+| temporary
+| Temporary
+|-
+| research
+| Проект "Подбор без заказчика" (Research)
+|-
+| assessment
+| Assessment
+|-
+| executive_search
+| Executive Search
+|-
+| advertising
+| Advertising
+|-
+| leasing
+| Leasing
+|-
+| salary_survey
+| Salary survey
+|-
+| calling
+| Calling
+|-
+| internal_recruitment
+| Внутренний рекрутмент
+|-
+| mass_recruitment
+| Внешний рекрутмент (МП)
+|-
+| express_internal_recruitment
+| Внутренний рекрутмент (МП)
+|-
+| market_plan
+| Маркетинговый план
+|-
+| freework
+| FreeWork
+|-
+| mpc
+| Проект "Слепое резюме"
+|}
+
+== События ==
+
+{| class="wikitable"
+|-
+! Тип !! Назначение
+|-
+| Client || Интервью у клиента, у линейного менеджера, у заказчика
+|-
+| PhoneContact || Телефонный контакт
+|-
+| EmplInterview  || Интервью с сотрудником
+|}
+
+=== Тип события из строки в код ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/dictionary/event2code
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "id": 3073,
+    "name": "Client"
+  },
+  {
+    "id": 1066,
+    "name": "PhoneContact"
+  },
+  {
+    "id": 1025,
+    "name": "EmplInterview"
+  }
+]
+</syntaxhighlight>
+
+=== Тип события из строки в xml  ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/dictionary/event2xml
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "id": "PplZakInterv",
+    "name": "Client"
+  },
+  {
+    "id": "PplPhoneInterv",
+    "name": "PhoneContact"
+  },
+  {
+    "id": "PplInterv",
+    "name": "EmplInterview"
+  }
+]
+</syntaxhighlight>
+
+=== Получение события ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/event/:ID
+</syntaxhighlight>
+
+Параметры редактирования в блоке '''result'''
+{| class="wikitable"
+|-
+! Параметр !! Назначение
+|-
+| minSymbols || Ограничение на минимальное количество символов при вводе результата
+|-
+| freeFormResult || Событие с результатом в виде формы свободного ввода
+|-
+| formResult || Событие с результатом в виде формы
+|-
+| resultFromDisk || Событие с результатом с диска
+|-
+| eventWithScript || Событие со скриптом
+|-
+| shortResult || Видимость кнопки "Сохранить без формы/документа"
+|-
+| shortResultBlock || Наличие у события (при внесении результата) блока краткого результата
+|-
+| shortResults[] || Список кратких результатов (если пользователь выбрал, что событие состоялось)
+|-
+| abortedResultReasons[] || Список причин почему событие не состоялось (если пользователь выбрал, что событие не состоялось)
+|}
+
+Параметры редактирования в блоке '''shortResult'''
+{| class="wikitable"
+|-
+! Параметр !! Назначение
+|-
+| tookPlace || Состоялось ли событие или нет
+|-
+| evaluatedScore || Описание оценки человека
+|-
+| result || Краткий результат/причина почему событие не состоялось
+|-
+| comment || комментарий
+|-
+| percent || Процент соответствия профилю вакансии
+|}
+
+Параметры редактирования в блоке '''edit'''
+{| class="wikitable"
+|-
+! Параметр !! Назначение
+|-
+| editable || Может ли сотрудник редактировать данное событие
+|-
+| closeable || Может ли сотрудник вносить результат по данному событию
+|-
+| changedCount || Сколько раз уже меняли дату события
+|-
+| allowedChangeCount || Сколько раз можно менять дату у данного типа событий (если 0, настройка не задана и проверять ее не надо)
+|-
+| allowedDaysDelta || Насколько дней максимум можно перенести дату данного типа событий (если 0, настройка не задана и проверять ее не надо).
+|}
+
+Ответ:
+
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "id": 77,
+  "type": "eventType",
+  "projectType": 8,
+  "details": {
+    "name": "Резюме",
+    "eventDate": "YYYYMMDD",
+    "eventTime": {
+      "from": "HHMM",
+      "to": "HHMM"
+    },
+    "alarmTime": "HHMM",
+    "comment": "Some event description",
+    "contact": [
+      {
+        "type": "People",
+        "id": 11,
+        "text": "Дивненко И.П."
+      }
+    ],
+    "company": [
+      {
+        "type": "Company",
+        "id": 1,
+        "text": "The Pathna Ltd"
+      }
+    ],
+    "responsible": [
+      {
+        "type": "People",
+        "id": 11,
+        "text": "Дивненко И.П."
+      }
+    ],
+    "schedule": [
+      {
+        "type": "People",
+        "id": 11,
+        "text": "Дивненко И.П."
+      }
+    ],
+    "people": [
+      {
+        "type": "People",
+        "id": 13,
+        "text": "Петров В.В."
+      }
+    ],
+    "project": [
+      {
+        "type": "Project",
+        "id": 331,
+        "text": "Программист Ада"
+      }
+    ]
+  },
+  "documents": [
+    {
+      "fileType": "txt",
+      "id": 78,
+      "name": "Интервью (рекрутер)",
+      "place": 11,
+      "docType": 91,
+      "creator": [
+        {
+          "type": "People",
+          "id": 11,
+          "text": "Дивненко И.П."
+        }
+      ]
+    }
+  ],
+  "result": {
+    "minSymbols": 128,
+    "freeFormResult": true,
+    "formResult": false,
+    "resultFromDisk": true,
+    "eventWithScript": false,
+    "shortResult": false,
+    "shortResultBlock": true,
+    "shortResults": [
+      {
+        "id": 36,
+        "text": "Для принятия решения информации не достаточно"
+      }
+    ],
+    "abortedResultReasons": [
+      {
+        "id": 7,
+        "text": "Другое"
+      }
+    ]
+  },
+  "shortResult": {
+    "tookPlace": true,
+    "evaluatedScore": "50/50",
+    "result": "Полностью соответствует требованиям",
+    "comment": "Частично соответствует требованиям",
+    "percent": 71.25
+  },
+  "edit": {
+    "editable": true,
+    "closeable": false,
+    "changedCount": 2,
+    "allowedChangeCount": 5,
+    "allowedDaysDelta": 30
+  }
+}
+</syntaxhighlight>
+
+=== Создание события ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/event
+</syntaxhighlight>
+
+Поле '''evaluatedScore''' может принимать следующие значения:
+
+{| class="wikitable"
+|-
+! Значение !! Назначение
+|-
+| good || Палец вверх
+|-
+| neutral || Нейтральная оценка
+|-
+| bad|| Палец вниз
+|}
+
+<syntaxhighlight line lang="javascript">
+{
+  "type": 1066,
+  "employee": 1,
+  "person": 3,
+  "contact": 3,
+  "organization": 1,
+  "project": 1,
+  "description": "Some event description",
+  "dateTo": "YYYYMMDD",
+  "time": {
+    "from": "HHMM",
+    "to": "HHMM"
+  },
+  "result": {
+    "type": "eventType",
+    "fileType": "txt",
+    "body": "PHhtbD50ZXN0PC94bWw+"
+  },
+  "shortResult": true,
+  "shortResultBlock": {
+    "tookPlace": true,
+    "evaluatedScore": "bad",
+    "resultCode": 2,
+    "result": "Полностью соответствует требованиям",
+    "percent": 45.5,
+    "comment": "Частично соответствует требованиям"
+  }
+}
+</syntaxhighlight>
+
+Есть несколько видов result:<br/>
+С xmlbody. Весь закодированный в base64 XML будет расскодирован на стороне ESS и добавлен напрямую внутрь тэга metadata
+<syntaxhighlight line lang="javascript">
+{
+  "result": {
+    "type": "eventType",
+    "xmlbody": "base64xml"
+  }
+}
+</syntaxhighlight>
+Скрипт.
+<syntaxhighlight line lang="javascript">
+{
+  "result": {
+    "type": "eventType",
+    "script": "base64",
+    "id": 1
+  }
+}
+</syntaxhighlight>
+
+'''Ограничения'''
+{| class="wikitable"
+|-
+! field !! nullable !! max-length
+|-
+| type || no || no
+|-
+| employee || no || no
+|-
+| person || no || no
+|-
+| contact || no || no
+|-
+| organization || no || no
+|-
+| project || no || no
+|-
+| description || no || no
+|-
+| dateTo || no || no
+|-
+| time/from || no || no
+|-
+| time/to || no || no
+|-
+| result/body/fileType || no || no
+|}
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/v2/event/:ID
+</syntaxhighlight>
+
+При передачи поле '''type''' должно быть одним из '''eventType'''(см. запросы выше), а содержимое формы передаваться через поле '''xmlbody'''. В случае передачи обычного текста нужно использовать поле '''body'''.
+
+Для типа '''Client''' поле '''body''' должно содержать base64 закодированный XML:
+
+<syntaxhighlight lang="xml">
+<MainData>
+    <CANDNAME>Гаденов Дмитрий Александрович</CANDNAME>
+    <ZAKNAME>Парфенов Николай</ZAKNAME>
+    <POSNAME>Продавец</POSNAME>
+    <ZAKINFO>информация от заказчика</ZAKINFO>
+    <CANDINFO>информация от кандидата</CANDINFO>
+    <INTDATE>20150603</INTDATE>
+</MainData>
+</syntaxhighlight>
+
+Для типа '''PhoneContact''' поле '''body''' должно содержать base64 закодированный XML:
+
+<syntaxhighlight lang="xml">
+<PhoneIntervMain>
+    <JobExperience>опыт</JobExperience>
+    <ForeignLanguage>вл ин языком</ForeignLanguage>
+    <DrivingLicense>вод права</DrivingLicense>
+    <Education>образование</Education>
+    <PCSkills>владение компом</PCSkills>
+    <WhatJobIsInterested>что рассматривает</WhatJobIsInterested>
+    <JobSearchHistory>история поиска работы</JobSearchHistory>
+    <SalaryExpectations>зп ожидания</SalaryExpectations>
+    <LocationRequirements>территориальный фактор</LocationRequirements>
+    <AdditionalInformation>доп инфа</AdditionalInformation>
+    <PersonalImpressions>личные впечатления</PersonalImpressions>
+    <ConverationOutcome>выводы</ConverationOutcome>
+    <CANDKEY>14</CANDKEY>
+    <REKRKEY>11</REKRKEY>
+    <INTDATE>20150603</INTDATE>
+    <REKR>Власова Светлана Сергеевна</REKR>
+    <CAND>Гаденов Дмитрий Александрович</CAND>
+</PhoneIntervMain>
+</syntaxhighlight>
+
+Для типа '''EmplInterview''' поле '''body''' должно содержать base64 закодированный XML:
+
+<syntaxhighlight lang="xml">
+<IntervMain>
+    <SotrName>Главный Администратор</SotrName>
+    <Candidate>Гаденов Дмитрий Александрович</Candidate>
+    <PersonalAppearance>внешний вид</PersonalAppearance>
+    <PersonalQualities>личные качества</PersonalQualities>
+    <ProfessionalMotivation>проф мотивация</ProfessionalMotivation>
+    <ProfessionalExperience>проф опыт, личн качества</ProfessionalExperience>
+    <CandKey>14</CandKey>
+    <SotrKey>1</SotrKey>
+    <IntDate>20150603</IntDate>
+    <LanguageSkills>владение ин языком</LanguageSkills>
+    <DifFromCV>отличие резюме от реального опыта, пропуски в карьере</DifFromCV>
+    <WantSalary>зп, пакет и ожидания</WantSalary>
+    <JobSearchHistory>история поиска работы</JobSearchHistory>
+    <WherePresent>куда буду представлять</WherePresent>
+    <WhereEfficient>позиция, где мб эффективен</WhereEfficient>
+    <DopInfo>доп комм</DopInfo>
+    <AlsoParticipated>так же участвовали</AlsoParticipated>
+</IntervMain>
+</syntaxhighlight>
+
+=== Изменение события ===
+
+Запрос (можно менять любое из перечисленных полей):
+<syntaxhighlight lang="html5">
+PUT /v2/event/:ID
+</syntaxhighlight>
+
+==== Форма ====
+<syntaxhighlight line lang="javascript">
+{
+  "dateTo": "20150604",
+  "time": {
+    "from": "1520",
+    "to": "2210"
+  },
+  "result": {
+    "xmlbody": "base64enc",
+    "type": "PplPhoneInterv"
+  }
+}
+</syntaxhighlight>
+==== Произвольный документ ====
+<syntaxhighlight line lang="javascript">
+{
+  "dateTo": "20150604",
+  "time": {
+    "from": "1520",
+    "to": "2210"
+  },
+  "result": {
+    "body": "base64",
+    "type": "PplPhoneInterv",
+    "fileType": "txt"
+  }
+}
+</syntaxhighlight>
+
+==== Скрипт ====
+<syntaxhighlight line lang="javascript">
+{
+  "dateTo": "20150604",
+  "time": {
+    "from": "1520",
+    "to": "2210"
+  },
+  "result": {
+    "body": "base64xml",
+    "id": 12
+  }
+}
+</syntaxhighlight>
+
+'''Ограничения'''
+{| class="wikitable"
+|-
+! field !! nullable !! max-length
+|-
+| dateTo || '''no''' || no
+|-
+| time/from || yes || no
+|-
+| time/to || yes || no
+|-
+| result/body || yes || no
+|-
+| result/xmlbody || yes || no
+|-
+| result/type || yes || no
+|-
+| result/fileType || '''no''' || no
+|}
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+Документы пересылаются точно также, как и при создании события. Если нужно только добавить результат (документ) события, то необходимо пересылать неизмененные дату и время.
+
+=== Получение скрипта ===
+Получение скрипта для внесения результатов по событию.
+
+<syntaxhighlight lang="html5">
+GET /v2/event/script/:ID
+</syntaxhighlight>
+ID - id события
+<br />
+Ответ:
+<syntaxhighlight line lang="javascript">
+{
+  "id": 51,
+  "preview": {
+    "type": 1,
+    "subtype": 2,
+    "body": "base64"
+  },
+  "script": [
+    {
+      "type": 1,
+      "subtype": 2,
+      "body": "base64"
+    }
+  ]
+}
+</syntaxhighlight>
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+
+== Календарь ==
+
+
+=== Получение данных календаря ===
+
+<syntaxhighlight lang="html5">
+GET /v2/calendar?datefrom=20170918&dateto=20170922&needmeet=true&needtask=false
+GET /v2/calendar/612?datefrom=20170918&dateto=20170922&needmeet=true&needtask=false
+</syntaxhighlight>
+
+{| class="wikitable"
+|-
+! Параметр !! Назначение
+|-
+| datefrom|| Период, за который будут выгружены данные
+|-
+| dateto|| Период, за который будут выгружены данные
+|-
+| needmeet || Будут выгружены События и Системные события (создаются из объектов)
+|-
+| needtask || Будут выгружены Задачи
+|}
+
+Ответ:
+<syntaxhighlight line lang="javascript">
+{
+  "events": [
+    {
+      "peopleId": 554091,
+      "date": "20170921",
+      "meetList": [
+        {
+          "type": "Event",
+          "id": 12967089,
+          "text": "Проверка рекомендаций",
+          "done": false,
+          "filter": {
+            "sotrmeet": false,
+            "private": false,
+            "telcnt": true,
+            "meetings": false,
+            "planer": true
+          },
+          "responsible": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "withWhom": [
+            {
+              "id": 585316,
+              "type": "People",
+              "text": "Лиховид Л.А."
+            },
+            {
+              "id": 679205,
+              "type": "People",
+              "text": "Любимов С.А."
+            },
+            {
+              "id": 679215,
+              "type": "People",
+              "text": "Ногтиков А.А."
+            },
+            {
+              "id": 679216,
+              "type": "People",
+              "text": "Наумов П.И."
+            }
+          ],
+          "planedsotr": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "project": [
+            {
+              "id": 52372,
+              "type": "Project",
+              "text": "10-ГПЗ (15/11/2013 дворник)"
+            }
+          ],
+          "organization": [
+            {
+              "id": 11887,
+              "type": "Company",
+              "text": "10-ГПЗ"
+            }
+          ]
+        },
+        {
+          "type": "Event",
+          "id": 12967093,
+          "text": "Интервью с сотрудником",
+          "done": false,
+          "alarm": 30,
+          "timeFrom": "1400",
+          "timeTo": "1430",
+          "meetingRoom": {
+            "id": 276,
+            "name": "Комната 2 с 10:00 до 11:00",
+            "lock": 277
+          },
+          "filter": {
+            "sotrmeet": false,
+            "private": false,
+            "telcnt": false,
+            "meetings": true,
+            "planer": true
+          },
+          "responsible": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "withWhom": [
+            {
+              "id": 454125,
+              "type": "People",
+              "text": "Приёмышев А.Л."
+            }
+          ],
+          "planedsotr": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ]
+        },
+        {
+          "type": "Event",
+          "id": 12967086,
+          "text": "Интервью у клиента",
+          "done": false,
+          "timeFrom": "1500",
+          "timeTo": "1600",
+          "filter": {
+            "sotrmeet": false,
+            "private": false,
+            "telcnt": false,
+            "meetings": true,
+            "planer": true
+          },
+          "responsible": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "withWhom": [
+            {
+              "id": 139477,
+              "type": "People",
+              "text": "Львов А."
+            },
+            {
+              "id": 139738,
+              "type": "People",
+              "text": "* *."
+            },
+            {
+              "id": 562177,
+              "type": "People",
+              "text": "Епремян А.Г."
+            }
+          ],
+          "planedsotr": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "project": [
+            {
+              "id": 55428,
+              "type": "Project",
+              "text": "4MEDIA GROUP AG (22/01/2015 Массовка)"
+            }
+          ],
+          "organization": [
+            {
+              "id": 12109,
+              "type": "Company",
+              "text": "4MEDIA GROUP AG"
+            }
+          ]
+        },
+        {
+          "type": "SotrMeet",
+          "id": 78246,
+          "text": "Что бы такое замутить?)",
+          "alarm": 30,
+          "timeFrom": "1700",
+          "timeTo": "1800",
+          "filter": {
+            "sotrmeet": true,
+            "private": false,
+            "telcnt": false,
+            "meetings": false,
+            "planer": true
+          },
+          "responsible": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ],
+          "planedsotr": [
+            {
+              "id": 554091,
+              "type": "People",
+              "text": "Шулятьев А.А."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "employeeId": 554091,
+  "dateFrom": "20170918",
+  "dateTo": "20170922",
+  "tasks": [
+    {
+      "id": 21338,
+      "type": "SotrTask",
+      "dateFrom": "20170901",
+      "dateTo": "20171101",
+      "done": false,
+      "priority": 2,
+      "description": "Что-то липкое и тягучее тянется и тянется!",
+      "alarm": {
+        "date": "20171018",
+        "time": "1200"
+      }
+    }
+  ]
+}
+</syntaxhighlight>
+
+
+<span id="BackToTop"></span>
+<div class="noprint" style="background-color:#FAFAFA; position:fixed; bottom:2%; left:0.25%; padding:0; margin:0;">
+[[File:Uparrow.png||link=#top]]
+</div>
+
+=== Получение данных о пользователях календаря ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/calendar/users
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight line lang="javascript">
+
+{
+    "id": 12,
+    "surname": "Иванова Анна Дмитриевна"
+  }
+</syntaxhighlight>
+
+
+
+<span id="BackToTop"></span>
+<div class="noprint" style="background-color:#FAFAFA; position:fixed; bottom:2%; left:0.25%; padding:0; margin:0;">
+[[File:Uparrow.png||link=#top]]
+</div>
+
+=== Создание задачи календаря ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/calendar/task
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+{
+    "description": "SomeDescr",
+    "date":{
+        "from": "20171108",
+        "to":   "20171109"
+    },
+    "priority": 1,
+    "done": false,
+    "alarm":{
+        "date": "20171108",
+        "time": "1100"
+    }
+}
+</syntaxhighlight>
+
+Ответ:
+
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/v2/calendar/task/9999
+</syntaxhighlight>
+
+=== Изменение задачи календаря ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+PUT /v2/calendar/task:ID
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+{
+    "description": "SomeDescrsdfsdfsdfsdfsf",
+    "date":{
+        "from": "20171108",
+        "to":   "20171109"
+    },
+    "priority": 1,
+    "done": false,
+    "alarm":{
+        "date": "20171108",
+        "time": "1100"
+    },
+    "id": 13
+}
+</syntaxhighlight>
+
+Ответ:
+
+<syntaxhighlight lang="html5">
+HTTP/1.1 201 Created
+Location: https://example.com/v2/calendar/task/9999
+</syntaxhighlight>
+
+=== Создание события календаря ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+POST /v2/calendar/event
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+{ 
+    "time":{
+        "from": "0330",
+        "to":   "0450"
+    },    
+    "description": "SomeDescrsdfsdfsdfsdfsf",
+    "comment": "Some COMMENT",
+    "date": "20171122",    
+    "roomkey": 2     
+}
+</syntaxhighlight>
+
+Ответ:
+
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+{
+  "id": 256,
+  "lockobjkey": 3
+}
+</syntaxhighlight>
+
+=== Изменение события календаря ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+PUT /v2/calendar/event:ID
+</syntaxhighlight>
+
+
+<syntaxhighlight line lang="javascript">
+{ 
+    "time":{
+        "from": "20171108",
+        "to":   "20171109"
+    },    
+    "description": "SomeDescrsdfsdfsdfsdfsf",
+    "comment": "Some COMMENT",
+    "date": "10191999",    
+    "roomkey": 2,    
+    "local_id": 13    
+}
+</syntaxhighlight>
+
+Ответ:
+
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+{
+  "id": 256,
+  "lockobjkey": 3
+}
+</syntaxhighlight>
+
+== Сводка событий «Что не сделано» ==
+
+
+=== Получение cводки событий «Что не сделано» ===
+
+<syntaxhighlight lang="html5">
+GET /v2/notdone
+</syntaxhighlight>
+
+Сводка событий «Что не сделано»
+
+{| class="wikitable"
+|-
+! Название поля !! По умолчанию показано !! Поле в xml (блок ContactSvodka\Contact\contmain) !! Тип
+|-
+| Дата || Да || date || дата
+|-
+| Проект || Да || prjkey (вместе с названием) || Спец поле (строка)
+|-
+| Тип проекта || Да || prjtype, prjtypename || Число, строка
+|-
+| Событие || Да || cntname || строка
+|-
+| Человек || Да || pplkey (вместе с названием) || Спец поле (строка)
+|-
+| Контактное лицо || Да || contpplkey (вместе с названием) || Спец поле (строка)
+|-
+| Компания || Да || orgkey (вместе с названием) || Спец поле (строка)
+|-
+| Описание || Да || comment || строка
+|-
+| Время || Нет || begtime, endtime || время
+|-
+| Сотрудник || Нет || otvsotr (вместе с названием) || Спец поле (строка)
+|-
+| Отдел || Нет || otdelname || строка
+|-
+| Офис || Нет || officename || строка
+|-
+| Описание компании || Нет || orgabout || строка
+|-
+| Занес || Нет || zaplsotr (вместе с названием) || Спец поле (строка)
+|-
+| ЦФО || Нет || CFO || строка
+|}
+
+Ответ:
+<syntaxhighlight line lang="javascript">
+{
+  "responsible": 11,
+  "people": -1,
+  "organization": -1,
+  "project": -1,
+  "notdoneCount" 4,
+  "data": {
+    "from": "20110101",
+    "to": "20171109"
+  },
+  "contacts": [
+    {
+      "id": 3,
+      "name": "Разговор",
+      "workCode": 1066,
+      "date": 20160707,
+      "time": {
+        "from": 1111,
+        "to": 1250
+      },
+      "alarmTime": 0,
+      "project": {
+        "type": 0,
+        "name": ""
+      },
+      "comment": "frefrew",
+      "organization": {
+        "about": "",
+        "department": "IT",
+        "office": "Главная группа",
+        "CFO": ""
+      },
+      "responsible": [
+        {
+          "type": "People",
+          "id": 11,
+          "text": "Divnenko I.J."
+        }
+      ],
+      "writer": [
+        {
+          "type": "People",
+          "id": 11,
+          "text": "Divnenko I.J."
+        }
+      ],
+      "people": [
+        {
+          "type": "People",
+          "id": 11,
+          "text": "Divnenko I.J."
+        }
+      ],
+      "edit": {
+        "editable": 1,
+        "closeable": 1,
+        "changedCount": 0,
+        "allowedChangeCount": 0,
+        "allowedDaysDelta": 0
+      },
+      "free": 1,
+      "form": 1,
+      "disk": 1,
+      "short": 0,
+      "script": 0,
+      "length": 0,
+      "ext": 1,
+      "place": 0,
+      "key": 0,
+      "fileType": "",
+      "createdate": 0,
+      "creator": 0,
+      "creatorName": "",
+      "initdate": 0
+    }
+  ]
+}
+</syntaxhighlight>
+
+== Сайт ==
+
+
+=== Получение о текущем пользователе ===
+
+<syntaxhighlight lang="html5">
+GET /v2/user/common/current
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+{
+  "id": 256,
+  "name": {
+    "firstName": "Петр",
+    "middleName": "Петрович",
+    "lastName": "Авагин"
+  },
+  "email": "ava@noava.com",
+  "type": "Employee",
+  "registred": true,
+  "opd": false
+}
+</syntaxhighlight>
+
+== Список объявлений ==
+
+=== Получение списка объявлений ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/actionvacancy 
+</syntaxhighlight>
+
+{| class="wikitable"
+|-
+! Фильтр (GET) !! Назначение
+|-
+| planning || Планирование мероприятия
+|-
+| gathering || Оценка потребностей
+|-
+| event || Запись на мероприятие
+|}
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "state": "Опубликовано",
+    "type": "registration",
+    "person": [
+      {
+        "id": 256,
+        "type": "Vacancy",
+        "text": "Запись на курсы по английскому языку"
+      }
+    ],
+    "responsible": [
+      {
+        "id": 257,
+        "type": "People",
+        "text": "Левиков В.В."
+      }
+    ]
+  }
+]
+</syntaxhighlight>
+
+{| class="wikitable"
+|-
+! state !! Назначение
+|-
+| registration || Запись на мероприятие
+|-
+| planning || Планирование мероприятия
+|-
+| gathering || Оценка потребностей
+|}
+
+=== Получение данных объявления ===
+
+Запрос:
+<syntaxhighlight lang="html5">
+GET /v2/actionvacancy/:VACID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+{
+  "state": "planning",
+  "type": "archive",
+  "name": {
+    "ru": "Инженер",
+    "en": "Инженер"
+  },
+  "date": {
+    "publication": "20171026",
+    "done": "20171125"
+  },
+  "city": {
+    "id": 256,
+    "ru": "Акаба",
+    "en": "Акаба"
+  },
+  "language": 258,
+  "offer": {
+    "ru": "Бонусы и социальный пакет:&#x0A;Бон Бон Бонус&#x0A; &#x0A;Место работы: У работодателя&#x0A; &#x0A;График работы:&#x0A",
+    "ruHTML": "&lt;div&gt;&lt;strong&gt;Бонусы и социальный пакет:&lt;/strong&gt;&lt;/div&gt;",
+    "en": "Бонусы и социальный пакет:&#x0A;Бон Бон Бонус&#x0A; &#x0A;Место работы: У работодателя&#x0A; &#x0A;",
+    "enHTML": "&lt;div&gt;&lt;strong&gt;Бонусы и социальный пакет:&lt;/strong&gt;&lt;"
+  },
+  "experience": {
+    "ru": "Опыт работы: 2 года&#x0A; &#x0A;Требования к опыту:&#x0A;Требования&#x0A; &#x0A;Образование: среднее&#x0A; &#x0A;",
+    "ruHTML": ">&lt;div&gt;&lt;strong&gt;Опыт работы:&lt;/strong&gt; 2 года&lt;/div&gt;&#x0A;&lt;",
+    "en": "Опыт работы: 2 года&#x0A; &#x0A;Требования к опыту:&#x0A;Требования&#x0A; &#x0A;Образование: среднее&#x0A; &#x0A;",
+    "enHTML": ">&lt;div&gt;&lt;strong&gt;Опыт работы:&lt;/strong&gt; 2 года&lt;/div&gt;&#x0A;&lt;"
+  },
+  "responsibility": {
+    "ru": "Обязанности:&#x0A;Обязанности",
+    "ruHTML": "&lt;div&gt;&lt;strong&gt;Обязанности:&lt;/strong&gt;&lt;",
+    "en": "Обязанности:&#x0A;Обязанности",
+    "enHTML": "&lt;div&gt;&lt;strong&gt;Обязанности:&lt;/strong&gt;&lt;"
+  },
+  "businessTrip": {
+    "id": 2621474,
+    "name": "A, B, C, C1e, De"
+  },
+  "driverLicense": "String",
+  "descriptions": [
+    {
+      "date": "20171117",
+      "annotation": "Аннотация",
+      "authors": "Авторы",
+      "duration": "Предполагаемая длительность",
+      "exam": "Тип экзамена",
+      "requirments": "Требования к участникам",
+      "cost": 20000.5,
+      "costPerPeople": 4500.25,
+      "comment": "Комментарий автора",
+      "goals": "Цели",
+      "tasks": "Задачи",
+      "additionalResources": "Дополнительные ресурсы (проектор, ножницы и т.д.)",
+      "schedule": "Предполагаемое расписание",
+      "trainer": "Предполагаемые тренеры"
+    }
+  ],
+  "names": [
+    {
+      "id": 257,
+      "type": "Vacancy",
+      "text": "Запись на курсы по английскому языку"
+    }
+  ],
+  "responsible": [
+    {
+      "id": 258,
+      "type": "People",
+      "text": "Левиков В.В."
+    }
+  ]
+}
+</syntaxhighlight>
+
+{| class="wikitable"
+|-
+! state !! Назначение
+|-
+| planning || Планирование мероприятия
+|-
+| gathering || Оценка потребностей
+|-
+| event || Запись на мероприятие
+|}
+
+{| class="wikitable"
+|-
+! type !! Назначение
+|-
+| request || Запрос
+|-
+| active || Опубликованные
+|-
+| archive || Архивные
+|}
+
+==  Заявки пользователя ==
+=== Получение сводки заявок ===
+
+<syntaxhighlight lang="html5">
+GET /v2/application
+</syntaxhighlight>
+
+{| class="wikitable"
+|-
+! GET фильтр !! Назначение
+|-
+| inwork || Показать все заявки в состоянии На рассмотрении
+|-
+| closed || Показать все заявки в состоянии Приняты
+|-
+| rejected || Показать все отклики в состоянии Отклонены
+|}
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "id": 256,
+    "name": "Заявка на мероприятие",
+    "people": {
+      "id": 257,
+      "name": "Романова Наталия Сергеевна"
+    },
+    "time": "1123",
+    "date": "20171113",
+    "vacancy": {
+      "id": 9,
+      "name": "Курсы английского"
+    },
+    "comment": "Комментарий сотрудника"
+  }
+]
+</syntaxhighlight>
+
+=== Получение данных одной заявки ===
+
+<syntaxhighlight lang="html5">
+GET /v2/application/:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+{
+  "id": 256,
+  "name": "Заявка на мероприятие",
+  "people": {
+    "id": 257,
+    "name": "Романова Наталия Сергеевна"
+  },
+  "time": "1123",
+  "date": "20171113",
+  "vacancy": {
+    "id": 9,
+    "name": "Курсы английского"
+  },
+  "comment": "Комментарий сотрудника"
+}
+</syntaxhighlight>
+
+=== Создание заявки (отклик) ===
+
+<syntaxhighlight lang="html5">
+POST /v2/application
+</syntaxhighlight>
+
+<syntaxhighlight line lang="javascript">
+{
+  "vacancy": 8,
+  "draft": true,
+  "comment": "Комментарий сотрудника к заявке"
+}
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+
+== Мероприятия ==
+=== Получение сводки мероприятий для человека ===
+
+<syntaxhighlight lang="html5">
+GET /v2/action?user=PEOPLEID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "project": {
+      "id": 256,
+      "name": "обучение специалистов 27/09/2016"
+    },
+    "stage": {
+      "id": 257,
+      "name": "1 тестирование"
+    }
+  }
+]
+</syntaxhighlight>
+
+=== Получение данных мероприятия ===
+
+<syntaxhighlight lang="html5">
+GET /v2/action/:ACTIONID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+{
+  "project": 256,
+  "numeqpos": 257,
+  "svodkapart": "String",
+  "responsibles": [
+    {
+      "id": 258,
+      "type": "People",
+      "text": "Василенко Светлана"
+    }
+  ],
+  "posname": [
+    {
+      "id": 259,
+      "type": "Project",
+      "text": "Курсы Английского"
+    }
+  ],
+  "participants": [
+    {
+      "id": 260,
+      "type": "People",
+      "text": "Resp. - Василенко Светлана"
+    }
+  ],
+  "descriptions": [
+    {
+      "date": "20171117",
+      "annotation": "Аннотация",
+      "authors": "Авторы",
+      "duration": "Предполагаемая длительность",
+      "exam": "Тип экзамена",
+      "requirments": "Требования к участникам",
+      "cost": 20000.5,
+      "costPerPeople": 4500.25,
+      "comment": "Комментарий автора",
+      "goals": "Цели",
+      "tasks": "Задачи",
+      "additionalResources": "Дополнительные ресурсы (проектор, ножницы и т.д.)",
+      "schedule": "Предполагаемое расписание",
+      "trainer": "Предполагаемые тренеры"
+    }
+  ]
+}
+</syntaxhighlight>
+
+== Ежедневник ==
+=== Получение ежедневника для человека ===
+
+<syntaxhighlight lang="html5">
+GET /v2/timesheet?project=:ID
+</syntaxhighlight>
+
+Ответ:
+<syntaxhighlight lang="html5">
+HTTP/1.1 200 OK
+</syntaxhighlight>
+<syntaxhighlight line lang="javascript">
+[
+  {
+    "date": "20171120",
+    "id": 13323,
+    "name": "Тестовый ежедневник1",
+    "project": {
+      "id": 257,
+      "name": "Rokko (06/09/2017 Поддержка офисов)"
+    },
+    "people": {
+      "id": 258,
+      "name": "Романова Наталия Сергеевна"
+    },
+    "dt": {
+      "time": {
+        "from": "1736",
+        "to": "1736"
+      },
+      "date": {
+        "from": "20171120",
+        "to": "20171121"
+      }
+    },
+    "place": "Где-то встречаемся.",
+    "trainers": [
+      {
+        "people": {
+          "id": 259,
+          "name": "Яхина Алина Рустемовна"
+        }
+      }
+    ]
+  }
+]
+</syntaxhighlight>
+
+<span id="BackToTop"></span>
+<div class="noprint" style="background-color:#FAFAFA; position:fixed; bottom:2%; left:0.25%; padding:0; margin:0;">
+[[File:Uparrow.png||link=#top]]
+</div>
+
